@@ -16,7 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from post_detail.views import get_scenario_detail
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/scenario-detail', get_scenario_detail),
 ]
