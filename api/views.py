@@ -32,6 +32,7 @@ from drf_yasg.utils import swagger_auto_schema
                         'code': '<OpenSCENARIO>...</OpenSCENARIO>',
                         'tags': ['어린이', '안전', '센서'],
                         'stats': { 'downloads': 0, 'views': 0, 'likes': 0 },
+                        'isBookmarked': 'FALSE',
                         'file': { 'format': 'OpenSCENARIO', 'version': '1.2', 'size': '100 KB'},
                         'uploader': {
                             'name': 'user',
@@ -60,7 +61,7 @@ def scenario_detail(request, id):
         cursor = connection.cursor()
         columns = ['id', 'title', 'description', 'createdAt', 'code',
                    'file_format', 'file_version', 'file_size',
-                   'stats_downloads', 'stats_views', 'stats_likes',
+                   'stats_downloads', 'stats_views', 'stats_likes', 'isBookmarked',
                    'uploader_name', 'uploader_initials', 'uploader_email', 'uploader_total_scenarios',
                    'tags']
         strSql = f"select {','.join(columns)} from view_scenario_details where id={id}"
@@ -80,6 +81,7 @@ def scenario_detail(request, id):
             'code': view['code'],
             'tags': view['tags'],
             'stats': { 'downloads': view['stats_downloads'], 'views': view['stats_views'], 'likes': view['stats_likes'] },
+            'isBookmarked': view['isBookmarked'],
             'file': { 'format': view['file_format'], 'version': view['file_version'], 'size': view['file_size']},
             'uploader': {
                 'name': view['uploader_name'],
