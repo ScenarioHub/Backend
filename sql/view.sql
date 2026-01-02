@@ -1,3 +1,10 @@
+USE scenariohub;
+
+DROP VIEW IF EXISTS view_scenario_items;
+DROP VIEW IF EXISTS view_scenario_details;
+DROP VIEW IF EXISTS view_my_scenarios;
+DROP VIEW IF EXISTS view_my_profile;
+
 CREATE VIEW view_scenario_items AS
 SELECT
     p.id AS id,
@@ -78,5 +85,5 @@ SELECT
     u.initials AS initials,
     u.created_at AS joinedAt,
     -- 내가 올린 게시물 수
-    (SELECT COUNT(*) FROM posts WHERE uploader_id = u.id) AS post_count,
+    (SELECT COUNT(*) FROM posts WHERE uploader_id = u.id) AS post_count
 FROM users u;

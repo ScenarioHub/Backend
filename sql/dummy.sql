@@ -1,3 +1,5 @@
+USE scenariohub;
+
 insert into users value(1, 'email', 'pass', 'name', 'nm', null, now(), now());
 insert into scenarios value(1, 1, 'file', 'video', 'OpenSCENARIO', '1.2', 100, 'snippet', now());
 insert into posts value(1, 1, 1, 'title', 'template description', 'description', 0, 0, 0, now());
