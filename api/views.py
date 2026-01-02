@@ -22,3 +22,52 @@ def get_scenario_detail_dummy(request):
         }
     }
     return Response(data)
+
+@api_view(['GET'])
+def scenario_detail(request, id):
+    try:
+        cursor = connection.cursor()
+        columns = ['id', 'title', 'description', 'createdAt', 'code',
+                   'file_format', 'file_version', 'file_size',
+                   'stats_downloads', 'stats_views', 'stats_likes',
+                   'uploader_name', 'uploader_initials', 'uploader_email', 'uploader_total_scenarios',
+                   'tags']
+        strSql = f"select {','.join(columns)} from view_scenario_details where id={id}"
+        cursor.execute(strSql)
+        view = cursor.fetchone()
+        view = {col: val for col, val in zip(columns, view)}
+        view['tags'] =[tag.strip() for tag in view['tags'].split(',')]
+        
+        connection.commit()
+        connection.close()
+        
+        message = {
+            'id': view['id'],
+            'title': view['title'],
+            'createdAt': view['createdAt'],
+            'description': view['description'],
+            'code': view['code'],
+            'tags': view['tags'],
+            'stats': { 'downloads': view['stats_downloads'], 'views': view['stats_views'], 'likes': view['stats_likes'] },
+            'file': { 'format': view['file_format'], 'version': view['file_version'], 'size': view['file_size']},
+            'uploader': {
+                'name': view['uploader_name'],
+                'initials': view['uploader_initials'],
+                'email': view['uploader_email'],
+                'totalScenarios': view['uploader_total_scenarios']
+            }
+        }
+    except Exception as e:
+        connection.rollback()
+        status = 404
+        message = '404 Not Found'
+    else:
+        status = 200
+    finally:
+        return Response(
+            data={
+                'status': status,
+                'message': message
+            },
+            status=status
+        )
