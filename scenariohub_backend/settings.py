@@ -39,8 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'drf_yasg',
+    'drf_yasg',                         # Swagger 사용을 위한 앱 추가
     'api',
+    'rest_framework_simplejwt',         # JWT 인증을 위한 앱 추가
 ]
 
 MIDDLEWARE = [
@@ -128,3 +129,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',        # JWT 인증 사용
+    ],
+}
+
+AUTH_USER_MODEL = 'api.User'       # auth_user 대신 user 사용
