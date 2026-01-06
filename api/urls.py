@@ -5,4 +5,5 @@ urlpatterns = [
     #path('scenario-detail/<int:id>/', scenario_detail),
     path('auth/register/', RegisterView.as_view()),
     path('auth/login/', CustomLoginView.as_view()),
+    path('posts/', PostListView.as_view()),
 ]
