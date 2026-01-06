@@ -26,7 +26,7 @@ SECRET_KEY = env.SECRET_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -77,17 +77,7 @@ WSGI_APPLICATION = 'scenariohub_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# DATABASES = env.DATABASES
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'scenariohub',
-        'USER': 'root',
-        'PASSWORD': 'root',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-    }
-}
+DATABASES = env.DATABASES
 
 
 # Password validation
@@ -138,3 +128,5 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL = 'api.User'       # auth_user 대신 user 사용
+
+DATA_ROOT = BASE_DIR.parent / 'data'

@@ -1,4 +1,5 @@
 django
 djangorestframework
-mysqlclient
 djangorestframework-simplejwt
+mysqlclient
+drf_yasgdjangorestframework-simplejwt
