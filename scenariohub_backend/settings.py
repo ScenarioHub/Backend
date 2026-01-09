@@ -127,6 +127,4 @@ REST_FRAMEWORK = {
     ],
 }
 
-AUTH_USER_MODEL = 'api.User'       # auth_user 대신 user 사용
-
 DATA_ROOT = BASE_DIR.parent / 'data'
