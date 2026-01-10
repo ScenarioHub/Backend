@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 import env
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -42,9 +43,11 @@ INSTALLED_APPS = [
     'drf_yasg',                         # Swagger 사용을 위한 앱 추가
     'api',
     'rest_framework_simplejwt',         # JWT 인증을 위한 앱 추가
+    'corsheaders',                       # CORS 처리를 위한 앱 추가: 어느 주소에서 요청이 와도 응답(외부 서버로 접근) / pip install django-cors-headers
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # CORS 미들웨어 추가
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -137,4 +140,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-AUTH_USER_MODEL = 'api.User'       # auth_user 대신 user 사용
+DATA_ROOT = BASE_DIR.parent / 'data'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'scenariohub.iptime.org']
