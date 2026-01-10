@@ -1,9 +1,11 @@
 from django.urls import path
-from api.views import RegisterView, CustomLoginView, PostListView
+from .views import register, login, post_list, scenario_detail, upload_post, xosc_download
 
 urlpatterns = [
-    #path('scenario-detail/<int:id>/', scenario_detail),
-    path('auth/register/', RegisterView.as_view()),
-    path('auth/login/', CustomLoginView.as_view()),
-    path('posts/', PostListView.as_view()),
+    path('auth/register/', register),
+    path('auth/login/', login),
+    path('posts/', post_list),
+    path('scenario-detail/<int:id>/', scenario_detail),
+    path('upload/post/', upload_post),
+    path('scenarios/<int:id>/download/', xosc_download.download_file, name='scenario_download'),
 ]
