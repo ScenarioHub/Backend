@@ -8,4 +8,5 @@ urlpatterns = [
     path('scenario-detail/<int:id>/', scenario_detail),
     path('upload/post/', upload_post),
     path('scenarios/<int:id>/download/', xosc_download.download_file, name='scenario_download'),
+    path('scenarios/<int:id>/video/', stream_video, name='scenario-video'),
 ]
