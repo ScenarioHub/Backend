@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import register, login, post_list, scenario_detail, upload_post, xosc_download
+from .views import register, login, post_list, scenario_detail, upload_post, xosc_download, stream_video
 
 urlpatterns = [
     path('auth/register/', register),

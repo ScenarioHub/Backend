@@ -29,7 +29,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=[permissions.AllowAny],
-    #url = "http://scenariohub.iptime.org/api/"
+    url='https://scenariohub.iptime.org',
 )
 
 urlpatterns = [
