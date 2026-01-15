@@ -267,3 +267,6 @@ pyrightconfig.json
 
 env.py
 .python-version
+restart_server.sh
+logs/
+*.log
