@@ -9,3 +9,5 @@ values	(1, '어린이', now()),
 		(3, '안전', now());
 insert into scenario_tags 
 values (1, 1), (1, 2);
+
+insert into maps(map_name, description, file_url, img_url) value('crest-curve', null, '/home/scenariohub/ScenarioHub/data/xodr/crest-curve.xodr', '/home/scenariohub/ScenarioHub/data/xodr/previews/crest-curve.png');

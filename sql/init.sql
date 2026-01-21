@@ -101,4 +101,11 @@ CREATE TABLE IF NOT EXISTS scenario_tags (
     ON UPDATE CASCADE
 );
 
-
+CREATE TABLE IF NOT EXISTS maps (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `map_name` VARCHAR(45) NOT NULL,
+  `description` TEXT NULL,
+  `file_url` VARCHAR(255) NOT NULL,
+  `img_url` VARCHAR(255) NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `map_name_UNIQUE` (`map_name` ASC) VISIBLE);
