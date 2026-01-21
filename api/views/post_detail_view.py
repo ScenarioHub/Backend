@@ -32,7 +32,7 @@ from drf_yasg.utils import swagger_auto_schema
                         'code': '<OpenSCENARIO>...</OpenSCENARIO>',
                         'tags': ['어린이', '안전', '센서'],
                         'stats': { 'downloads': 0, 'views': 0, 'likes': 0 },
-                        'isBookmarked': 'FALSE',
+                        'isBookmarked': False,
                         'file': { 'format': 'OpenSCENARIO', 'version': '1.2', 'size': '100 KB'},
                         'uploader': {
                             'name': 'user',
@@ -81,7 +81,7 @@ def scenario_detail(request, id):
             'code': view['code'],
             'tags': view['tags'],
             'stats': { 'downloads': view['stats_downloads'], 'views': view['stats_views'], 'likes': view['stats_likes'] },
-            'isBookmarked': 'FALSE',
+            'isBookmarked': False,
             'file': { 'format': view['file_format'], 'version': view['file_version'], 'size': view['file_size']},
             'uploader': {
                 'name': view['uploader_name'],
