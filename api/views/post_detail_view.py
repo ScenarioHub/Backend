@@ -32,7 +32,7 @@ from drf_yasg.utils import swagger_auto_schema
                         'code': '<OpenSCENARIO>...</OpenSCENARIO>',
                         'tags': ['어린이', '안전', '센서'],
                         'stats': { 'downloads': 0, 'views': 0, 'likes': 0 },
-                        'isBookmarked': 'FALSE',
+                        'isBookmarked': False,
                         'file': { 'format': 'OpenSCENARIO', 'version': '1.2', 'size': '100 KB'},
                         'uploader': {
                             'name': 'user',
@@ -64,8 +64,8 @@ def scenario_detail(request, id):
                    'stats_downloads', 'stats_views', 'stats_likes',
                    'uploader_name', 'uploader_initials', 'uploader_email', 'uploader_total_scenarios',
                    'tags']
-        strSql = f"select {','.join(columns)} from view_scenario_details where id={id}"
-        cursor.execute(strSql)
+        strSql = f"SELECT {','.join(columns)} FROM view_scenario_details WHERE id = %s"     # 수정, 기존 방식은 url에 id를 직접 넣음, 지금은 파라미터로 처리
+        cursor.execute(strSql, [id]) 
         view = cursor.fetchone()
         view = {col: val for col, val in zip(columns, view)}
         view['tags'] =[tag.strip() for tag in view['tags'].split(',')]
@@ -81,7 +81,7 @@ def scenario_detail(request, id):
             'code': view['code'],
             'tags': view['tags'],
             'stats': { 'downloads': view['stats_downloads'], 'views': view['stats_views'], 'likes': view['stats_likes'] },
-            'isBookmarked': 'FALSE',
+            'isBookmarked': False, # boolean형으로 수정
             'file': { 'format': view['file_format'], 'version': view['file_version'], 'size': view['file_size']},
             'uploader': {
                 'name': view['uploader_name'],

@@ -1,3 +1,4 @@
+import math # 페이지 수 계산을 위한 math import
 from django.shortcuts import render
 from django.db import connection
 from rest_framework.decorators import api_view, permission_classes
@@ -44,7 +45,10 @@ from drf_yasg.utils import swagger_auto_schema
                             "tags": "",
                             "isBookmarked": False
                         },
-                    ]
+                    ],
+                    "total_pages": 3,
+                    "current_page": 1,
+                    "total_count": 32
                 },
             }
         ),
@@ -64,8 +68,9 @@ def post_list(request):
     """함수 기반의 Raw SQL 게시글 목록 조회
 
     Query params:
-      - page (int, default=1)
-      - page_size (int, default=12)
+      - page (int, default=1)               # 페이지 수
+      - page_size (int, default=12)         # 페이지에 보여줄 게시글의 수
+      - sort (String, default='latest')     # 게시글 정렬 기준
     """
     try:
         # pagination
@@ -82,14 +87,33 @@ def post_list(request):
         except Exception:
             page_size = 12
 
+        # 정렬 파라미터 추가 수신 
+        sort_by = request.query_params.get('sort', 'latest')
+
+        # 정렬 조건에 따른 SQL 구문 결정
+        if sort_by == 'popular':
+            order_query = "ORDER BY p.view_count DESC" # 지금은 인기순이 조회수 순인데, 좋아요 순으로 하려면 p.like_count
+        elif sort_by == 'oldest':
+            order_query = "ORDER BY p.created_at ASC"
+        else:
+            # 기본값은 최신순(latest)
+            order_query = "ORDER BY p.created_at DESC"
+
         offset = (page - 1) * page_size
 
-        sql = '''
+        # 전체 게시글 개수 조회 (페이지 계산을 위한)
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM posts")
+            total_count = cursor.fetchone()[0]
+        # 전체 페이지 수 계산
+        total_pages = math.ceil(total_count / page_size) if total_count > 0 else 0
+
+        sql = f'''
             SELECT p.id, p.title, p.description, p.created_at, p.view_count, p.like_count, p.download_count,
                    u.name as uploader_name, u.initials as uploader_initials
             FROM posts p
             JOIN users u ON p.uploader_id = u.id
-            ORDER BY p.created_at DESC
+            {order_query}
             LIMIT %s OFFSET %s
         '''
 
@@ -132,7 +156,15 @@ def post_list(request):
                 tlist = tags_map.get(p['id'], [])[:5]
                 p['tags'] = ",".join(tlist)
 
-        return Response({"status": 200, "data": posts}, status=status.HTTP_200_OK)
+        return Response({
+            "status": 200, 
+            "data": posts,
+            "total_pages": total_pages, # 전체 페이지 수 (프론트엔드의 요청사항: 개시물 최대 페이지 개수 → 전체 페이지 수)
+            "total_count": total_count, # 전체 게시글 수
+            "current_page": page,       # 현재 페이지
+            "sort": sort_by             # 현재 적용된 정렬 기준을 프론트엔드에 전달
+            }, 
+            status=status.HTTP_200_OK)
 
     except Exception:
         import traceback
