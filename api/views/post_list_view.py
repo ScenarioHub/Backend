@@ -12,6 +12,20 @@ from drf_yasg.utils import swagger_auto_schema
     method="get",
     operation_summary="시나리오 목록 조회",
     operation_description="시나리오 목록을 조회합니다.",
+    manual_parameters=[
+        openapi.Parameter(
+            'page', openapi.IN_QUERY, 
+            description="조회할 페이지 번호 (기본값: 1)", 
+            type=openapi.TYPE_INTEGER, 
+            default=1
+        ),
+        openapi.Parameter(
+            'sort', openapi.IN_QUERY, 
+            description="정렬 기준: popular(인기순), latest(최신순), oldest(오래된순)", 
+            type=openapi.TYPE_STRING, 
+            default='latest'
+        ),
+    ],
     responses={
         200: openapi.Response(
             description="조회 성공",
@@ -80,14 +94,10 @@ def post_list(request):
                 page = 1
         except Exception:
             page = 1
-        try:
-            page_size = int(request.query_params.get('page_size', 12))
-            if page_size < 1:
-                page_size = 12
-        except Exception:
-            page_size = 12
 
-        # 정렬 파라미터 추가 수신 
+        page_size = 12
+
+        # 정렬 파라미터 수신 
         sort_by = request.query_params.get('sort', 'latest')
 
         # 정렬 조건에 따른 SQL 구문 결정
@@ -95,8 +105,7 @@ def post_list(request):
             order_query = "ORDER BY p.view_count DESC" # 지금은 인기순이 조회수 순인데, 좋아요 순으로 하려면 p.like_count
         elif sort_by == 'oldest':
             order_query = "ORDER BY p.created_at ASC"
-        else:
-            # 기본값은 최신순(latest)
+        else:                                          # 기본값은 최신순(latest)
             order_query = "ORDER BY p.created_at DESC"
 
         offset = (page - 1) * page_size
