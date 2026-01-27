@@ -75,7 +75,4 @@ def my_scenario(request):
         columns = [col[0] for col in cursor.description]
         scenarios = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
-    if scenarios:
-        return Response({"status": 200, "message": scenarios}, status=status.HTTP_200_OK)
-    
-    return Response({"status": 404, "message": "404 Not Found"}, status=status.HTTP_404_NOT_FOUND)
+    return Response({"status": 200, "message": scenarios}, status=status.HTTP_200_OK)
