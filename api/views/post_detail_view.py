@@ -68,7 +68,7 @@ def scenario_detail(request, id):
         cursor.execute(sql_query, [id]) 
         view = cursor.fetchone()
         view = {col: val for col, val in zip(columns, view)}
-        view['tags'] =[tag.strip() for tag in view['tags'].split(',')]
+        view['tags'] = [tag.strip() for tag in view['tags'].split(',')] if view['tags'] else []
         
         sql_query = f"select id from users where email={view['uploader_email']}"
         cursor.execute(sql_query)
