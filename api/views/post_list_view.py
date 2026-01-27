@@ -17,18 +17,22 @@ from drf_yasg.utils import swagger_auto_schema
             examples={
                 'application/json': {
                     "status": 200,
-                    "data": [
+                    "message": [
                         {
                             "id": 28,
                             "title": "4",
                             "description": "4",
                             "createdAt": "2026-01-04 21:20:07",
-                            "stats_downloads": 0,
-                            "stats_views": 0,
-                            "stats_likes": 0,
-                            "uploader_name": "name",
-                            "uploader_initials": "nm",
-                            "tags": "55,555",
+                            "stats": {
+                                "downloads": 0,
+                                "views": 0,
+                                "likes": 0,
+                            },
+                            "uploader_info": {
+                                "uploader_name": "name",
+                                "uploader_id": 1
+                            },
+                            "tags": ["55", "555"],
                             "isBookmarked": False
                         },
                         {
@@ -36,12 +40,16 @@ from drf_yasg.utils import swagger_auto_schema
                             "title": "4",
                             "description": "4",
                             "createdAt": "2026-01-04 21:19:10",
-                            "stats_downloads": 0,
-                            "stats_views": 0,
-                            "stats_likes": 0,
-                            "uploader_name": "name",
-                            "uploader_initials": "nm",
-                            "tags": "",
+                            "stats": {
+                                "downloads": 0,
+                                "views": 0,
+                                "likes": 0,
+                            },
+                            "uploader_info": {
+                                "uploader_name": "name",
+                                "uploader_id": 1
+                            },
+                            "tags": [],
                             "isBookmarked": False
                         },
                     ]
@@ -86,7 +94,7 @@ def post_list(request):
 
         sql = '''
             SELECT p.id, p.title, p.description, p.created_at, p.view_count, p.like_count, p.download_count,
-                   u.name as uploader_name, u.initials as uploader_initials
+                   u.name as uploader_name, u.initials as uploader_initials, u.id as uid
             FROM posts p
             JOIN users u ON p.uploader_id = u.id
             ORDER BY p.created_at DESC
@@ -107,11 +115,15 @@ def post_list(request):
                 'title': r[1],
                 'description': r[2],
                 'createdAt': r[3].strftime("%Y-%m-%d %H:%M:%S") if r[3] else None,
-                'stats_downloads': r[6],
-                'stats_views': r[4],
-                'stats_likes': r[5],
-                'uploader_name': r[7],
-                'uploader_initials': r[8],
+                'stats': {
+                    'downloads': r[6],
+                    'views': r[4],
+                    'likes': r[5],
+                },
+                'uploader_info': {
+                    'uploader_name': r[7],
+                    'uploader_id': r[9]
+                },
                 'tags': '',
                 'isBookmarked': False,
             })
@@ -130,9 +142,9 @@ def post_list(request):
 
             for p in posts:
                 tlist = tags_map.get(p['id'], [])[:5]
-                p['tags'] = ",".join(tlist)
+                p['tags'] = tlist
 
-        return Response({"status": 200, "data": posts}, status=status.HTTP_200_OK)
+        return Response({"status": 200, "message": posts}, status=status.HTTP_200_OK)
 
     except Exception:
         import traceback

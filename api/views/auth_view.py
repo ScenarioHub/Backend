@@ -132,8 +132,13 @@ def register(request):
                 'application/json': {
                     'status': 200,
                     'message': {
-                        'access': '0',
-                        'refresh': 'example@example.com',
+                        'access': 'token',
+                        'refresh': 'token',
+                        'lastLogin': '2026-01-23T16:09:05.012919Z',
+                        'user':{
+                            "email": 'example@example.com', 
+                            "name": 'name'
+                        }
                     }
                 }
             }
@@ -203,10 +208,10 @@ def login(request):
 
         return Response({
             "status": 200,
-            "data": {
+            "message": {
                 "access": str(access),
                 "refresh": str(refresh),
-                "user": {"id": user_id, "email": email, "name": name},
+                "user": {"email": email, "name": name},
                 "lastLogin": last_login_at
             }
         }, status=status.HTTP_200_OK)

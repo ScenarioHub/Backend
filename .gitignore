@@ -270,3 +270,4 @@ env.py
 restart_server.sh
 logs/
 *.log
+.requirements.sha256

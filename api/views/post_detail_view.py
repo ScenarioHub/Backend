@@ -25,7 +25,7 @@ from drf_yasg.utils import swagger_auto_schema
                 'application/json': {
                     'status': 200,
                     'message': {
-                        'id': '0',
+                        'id': 0,
                         'title': '어린이 주행 시나리오',
                         'createdAt': '2025-12-28 16:01:45',
                         'description': '어린이 보호구역에서 다양한 돌발 상황(도로 횡단, 차 사이에서 등장 등)을 포함한 시나리오입니다.',
@@ -33,11 +33,11 @@ from drf_yasg.utils import swagger_auto_schema
                         'tags': ['어린이', '안전', '센서'],
                         'stats': { 'downloads': 0, 'views': 0, 'likes': 0 },
                         'isBookmarked': False,
-                        'file': { 'format': 'OpenSCENARIO', 'version': '1.2', 'size': '100 KB'},
+                        'file': { 'format': 'OpenSCENARIO', 'version': '1.2', 'size': 100},
                         'uploader': {
                             'name': 'user',
+                            'uploader_id': 1,
                             'email': 'email@email.com',
-                            'initials': 'US',
                             'totalScenarios': 12
                         }
                     }
@@ -70,6 +70,10 @@ def scenario_detail(request, id):
         view = {col: val for col, val in zip(columns, view)}
         view['tags'] =[tag.strip() for tag in view['tags'].split(',')]
         
+        strSql = f"select id from users where email={view['uploader_email']}"
+        cursor.execute(strSql)
+        uid = int(cursor.fetchone()[0])
+
         connection.commit()
         connection.close()
         
@@ -85,7 +89,7 @@ def scenario_detail(request, id):
             'file': { 'format': view['file_format'], 'version': view['file_version'], 'size': view['file_size']},
             'uploader': {
                 'name': view['uploader_name'],
-                'initials': view['uploader_initials'],
+                'uploader_id': uid, 
                 'email': view['uploader_email'],
                 'totalScenarios': view['uploader_total_scenarios']
             }
@@ -94,6 +98,9 @@ def scenario_detail(request, id):
         connection.rollback()
         status = 404
         message = '404 Not Found'
+
+        import traceback
+        print(traceback.format_exc())
     else:
         status = 200
     finally:
