@@ -1,13 +1,12 @@
-from django.shortcuts import render
 from django.db import connection
-from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import api_view, parser_classes
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from utils.utils import build_filename, save_scenario_file, save_video_file
-
 
 @swagger_auto_schema(
     method="post",
@@ -83,12 +82,12 @@ def upload_post(request):
         video_path = save_video_file(scenario_path, file_name)
 
 
-        st_columns = ['owner_id', 'file_url', 'video_url',
+        scenario_columns = ['owner_id', 'file_url', 'video_url',
                     'file_format', 'file_version', 'file_size',
                     'code_snippet', 'created_at']
-        st_sql = f"insert into scenarios({','.join(st_columns)}) values({','.join(['%s' for _ in range(len(st_columns))])})"
+        scenario_sql = f"insert into scenarios({','.join(scenario_columns)}) values({','.join(['%s' for _ in range(len(scenario_columns))])})"
         cursor.execute(
-            st_sql,
+            scenario_sql,
             [uid, scenario_path, video_path, 
              'OpenSCENARIO', '1.2', uploaded_file.size,
              'snippet', ts]
@@ -106,7 +105,6 @@ def upload_post(request):
              '0', '0', '0', ts]
         )
         post_id = cursor.lastrowid
-
 
         # 3) tags + scenario_tags
         if tag_list:

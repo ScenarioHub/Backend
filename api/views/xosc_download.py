@@ -1,9 +1,9 @@
 import os
 
-from django.http import StreamingHttpResponse
 from django.db import connection
-from rest_framework.decorators import api_view
+from django.http import StreamingHttpResponse
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -60,6 +60,11 @@ def download_file(request, id):
         return response
     except Exception:
         f.close()
+
+        import traceback
+        print(traceback.format_exc())
+                
+
         return Response(
                 data={
                     'status': status,

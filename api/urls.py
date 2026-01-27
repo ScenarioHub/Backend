@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import register, login, post_list, scenario_detail, upload_post, download_file, stream_video, get_map_list, get_map_preview
+from .views import *
 
 urlpatterns = [
     # 인증 관련

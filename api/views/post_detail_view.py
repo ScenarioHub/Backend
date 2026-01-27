@@ -1,7 +1,7 @@
-from django.shortcuts import render
 from django.db import connection
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -36,7 +36,7 @@ from drf_yasg.utils import swagger_auto_schema
                         'file': { 'format': 'OpenSCENARIO', 'version': '1.2', 'size': 100},
                         'uploader': {
                             'name': 'user',
-                            'uploader_id': 1,
+                            'uploaderId': 1,
                             'email': 'email@email.com',
                             'totalScenarios': 12
                         }
@@ -59,19 +59,19 @@ from drf_yasg.utils import swagger_auto_schema
 def scenario_detail(request, id):
     try:
         cursor = connection.cursor()
-        columns = ['id', 'title', 'description', 'createdAt', 'code',
+        columns = ['id', 'title', 'description', 'created_at', 'code',
                    'file_format', 'file_version', 'file_size',
                    'stats_downloads', 'stats_views', 'stats_likes',
                    'uploader_name', 'uploader_initials', 'uploader_email', 'uploader_total_scenarios',
                    'tags']
-        strSql = f"SELECT {','.join(columns)} FROM view_scenario_details WHERE id = %s"     # 수정, 기존 방식은 url에 id를 직접 넣음, 지금은 파라미터로 처리
-        cursor.execute(strSql, [id]) 
+        sql_query = f"SELECT {','.join(columns)} FROM view_scenario_details WHERE id = %s"     # 수정, 기존 방식은 url에 id를 직접 넣음, 지금은 파라미터로 처리
+        cursor.execute(sql_query, [id]) 
         view = cursor.fetchone()
         view = {col: val for col, val in zip(columns, view)}
         view['tags'] =[tag.strip() for tag in view['tags'].split(',')]
         
-        strSql = f"select id from users where email={view['uploader_email']}"
-        cursor.execute(strSql)
+        sql_query = f"select id from users where email={view['uploader_email']}"
+        cursor.execute(sql_query)
         uid = int(cursor.fetchone()[0])
 
         connection.commit()
@@ -80,7 +80,7 @@ def scenario_detail(request, id):
         message = {
             'id': view['id'],
             'title': view['title'],
-            'createdAt': view['createdAt'],
+            'createdAt': view['created_at'],
             'description': view['description'],
             'code': view['code'],
             'tags': view['tags'],
@@ -89,7 +89,7 @@ def scenario_detail(request, id):
             'file': { 'format': view['file_format'], 'version': view['file_version'], 'size': view['file_size']},
             'uploader': {
                 'name': view['uploader_name'],
-                'uploader_id': uid, 
+                'uploaderId': uid, 
                 'email': view['uploader_email'],
                 'totalScenarios': view['uploader_total_scenarios']
             }

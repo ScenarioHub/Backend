@@ -1,9 +1,9 @@
-import math # 페이지 수 계산을 위한 math import
-from django.shortcuts import render
+import math
+
 from django.db import connection
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -32,45 +32,48 @@ from drf_yasg.utils import swagger_auto_schema
             examples={
                 'application/json': {
                     "status": 200,
-                    "message": [
-                        {
-                            "id": 28,
-                            "title": "4",
-                            "description": "4",
-                            "createdAt": "2026-01-04 21:20:07",
-                            "stats": {
-                                "downloads": 0,
-                                "views": 0,
-                                "likes": 0,
+                    "message": {
+                        "posts": [
+                            {
+                                "id": 28,
+                                "title": "4",
+                                "description": "4",
+                                "createdAt": "2026-01-04 21:20:07",
+                                "stats": {
+                                    "downloads": 0,
+                                    "views": 0,
+                                    "likes": 0,
+                                },
+                                "uploader": {
+                                    "name": "name",
+                                    "uploaderId": 1
+                                },
+                                "tags": ["55", "555"],
+                                "isBookmarked": False
                             },
-                            "uploader_info": {
-                                "uploader_name": "name",
-                                "uploader_id": 1
+                            {
+                                "id": 27,
+                                "title": "4",
+                                "description": "4",
+                                "createdAt": "2026-01-04 21:19:10",
+                                "stats": {
+                                    "downloads": 0,
+                                    "views": 0,
+                                    "likes": 0,
+                                },
+                                "uploader": {
+                                    "name": "name",
+                                    "uploaderId": 1
+                                },
+                                "tags": [],
+                                "isBookmarked": False
                             },
-                            "tags": ["55", "555"],
-                            "isBookmarked": False
-                        },
-                        {
-                            "id": 27,
-                            "title": "4",
-                            "description": "4",
-                            "createdAt": "2026-01-04 21:19:10",
-                            "stats": {
-                                "downloads": 0,
-                                "views": 0,
-                                "likes": 0,
-                            },
-                            "uploader_info": {
-                                "uploader_name": "name",
-                                "uploader_id": 1
-                            },
-                            "tags": [],
-                            "isBookmarked": False
-                        },
-                    ],
-                    "total_pages": 3,
-                    "current_page": 1,
-                    "total_count": 32
+                        ],
+                        "totalPages": 3,
+                        "currentPage": 1,
+                        "totalCount": 32,
+                        "sort": "latest"
+                    }
                 },
             }
         ),
@@ -153,9 +156,9 @@ def post_list(request):
                     'views': r[4],
                     'likes': r[5],
                 },
-                'uploader_info': {
-                    'uploader_name': r[7],
-                    'uploader_id': r[9]
+                'uploader': {
+                    'name': r[7],
+                    'uploaderId': r[9]
                 },
                 'tags': '',
                 'isBookmarked': False,
@@ -179,15 +182,18 @@ def post_list(request):
 
         return Response({
             "status": 200, 
-            "data": posts,
-            "total_pages": total_pages, # 전체 페이지 수 (프론트엔드의 요청사항: 개시물 최대 페이지 개수 → 전체 페이지 수)
-            "total_count": total_count, # 전체 게시글 수
-            "current_page": page,       # 현재 페이지
-            "sort": sort_by             # 현재 적용된 정렬 기준을 프론트엔드에 전달
-            }, 
+            "message": {
+                "posts": posts,
+                "totalPages": total_pages,  # 전체 페이지 수 (프론트엔드의 요청사항: 개시물 최대 페이지 개수 → 전체 페이지 수)
+                "currentPage": page,        # 현재 페이지
+                "totalCount": total_count,  # 전체 게시글 수
+                "sort": sort_by             # 현재 적용된 정렬 기준을 프론트엔드에 전달
+                }
+            },
             status=status.HTTP_200_OK)
 
     except Exception:
         import traceback
         print(traceback.format_exc())
+        
         return Response({"status": 500, "message": "internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

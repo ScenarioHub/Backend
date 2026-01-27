@@ -1,10 +1,10 @@
 import mimetypes
 
-from django.shortcuts import render
 from django.db import connection
 from django.http import FileResponse
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -21,7 +21,7 @@ from drf_yasg.utils import swagger_auto_schema
                     'message': [
                         {
                             'id': 1,
-                            'map_name': 'crest-curve',
+                            'mapName': 'crest-curve',
                             'description': '',
                         },
                     ]
@@ -36,8 +36,8 @@ def get_map_list(request):
         cursor = connection.cursor()
 
         columns = ['id', 'map_name', 'description', 'file_url', 'img_url']
-        strSql = f"select * from maps"
-        cursor.execute(strSql)
+        sql_query = f"select * from maps"
+        cursor.execute(sql_query)
         view = cursor.fetchall()
         view = [{col: val for col, val in zip(columns, view[i])} for i in range(len(view))]
 
@@ -46,7 +46,7 @@ def get_map_list(request):
 
         message = [{
             'id': v['id'],
-            'map_name': v['map_name'],
+            'mapName': v['map_name'],
             'description': v['description'],
         }
             for v in view
@@ -111,8 +111,8 @@ def get_map_preview(request):
         return Response(data={'status': 400, 'message': '400 Bad Request'}, status=400)
     try:
         cursor = connection.cursor()
-        strSql = f"select img_url from maps where id={map_id}"
-        cursor.execute(strSql)
+        sql_query = f"select img_url from maps where id={map_id}"
+        cursor.execute(sql_query)
         img_url = cursor.fetchone()[0]
 
         connection.commit()

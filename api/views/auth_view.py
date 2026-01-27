@@ -1,15 +1,13 @@
 from types import SimpleNamespace
 
-from django.shortcuts import render
 from django.db import connection
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password, check_password
-
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes, parser_classes
-from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from drf_yasg import openapi
@@ -42,7 +40,6 @@ from drf_yasg.utils import swagger_auto_schema
                     'message': {
                         'id': '0',
                         'email': 'example@example.com',
-                        'initials': 'ex',
                     }
                 }
             }
@@ -71,14 +68,6 @@ def register(request):
     name = data.get("name").strip()
     initials = "nm"
 
-    # 기본 유효성 검사
-    # 프론트 위임
-    # if not email or not password or not name:
-    #     return Response({"status": 400, "message": "필수 필드(email, password, name) 누락"}, status=status.HTTP_400_BAD_REQUEST)
-
-    # if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
-    #     return Response({"status": 400, "message": "이메일 형식이 올바르지 않습니다."}, status=status.HTTP_400_BAD_REQUEST)
-
     hashed_pw = make_password(password)
 
     try:
@@ -100,8 +89,8 @@ def register(request):
             connection.commit()
 
     except Exception as e:
-        # 필요하면 로깅 추가
         connection.rollback()
+
         import traceback
         print(traceback.format_exc())
 
@@ -179,7 +168,6 @@ def login(request):
             return Response({"status": 401, "message": "invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
         user_id, hashed_pw, name = row
-        last_login_at = timezone.now()
 
         # if not is_active:
         #     return Response({"status": 403, "message": "user is inactive"}, status=status.HTTP_403_FORBIDDEN)
@@ -188,13 +176,10 @@ def login(request):
             return Response({"status": 401, "message": "invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
         # 서버 시간으로 로그인 시간 설정 (추가 SELECT 없이 동일한 값을 클라이언트에 반환)
-        
+        last_login_at = timezone.now()
         cursor.execute("UPDATE users SET last_login_at = %s WHERE id = %s", [last_login_at, user_id])
-        try:
-            connection.commit()
-        except Exception:
-            # 일부 DB 드라이버에서는 명시적 commit이 필요 없을 수 있음
-            pass
+        
+        connection.commit()
 
         # 토큰 생성: 간단한 객체에 id 필드를 넣어 RefreshToken.for_user에 전달합니다.
         user_obj = SimpleNamespace(id=user_id, pk=user_id, email=email, name=name)
@@ -217,7 +202,7 @@ def login(request):
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
-        # 필요하면 로깅 추가
+        connection.rollback()
 
         import traceback
         print(traceback.format_exc())
