@@ -1,4 +1,5 @@
 from django.db import connection
+from rest_framework.decorators import api_view, parser_classes, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, parser_classes
@@ -6,6 +7,7 @@ from rest_framework.decorators import api_view, parser_classes
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from api.decorators import jwt_auth_required
 from utils.utils import build_filename, save_scenario_file, save_video_file
 
 @swagger_auto_schema(
@@ -14,6 +16,8 @@ from utils.utils import build_filename, save_scenario_file, save_video_file
     operation_description="업로드한 시나리오를 공유합니다.",
     consumes=["multipart/form-data"],
     manual_parameters=[
+        openapi.Parameter("Authorization", openapi.IN_HEADER, description="Bearer <JWT 토큰>", 
+                          type=openapi.TYPE_STRING),
         openapi.Parameter("title", openapi.IN_FORM, description="Post title",
                           type=openapi.TYPE_STRING, required=True),
         openapi.Parameter("description", openapi.IN_FORM, description="Post description",
@@ -49,8 +53,12 @@ from utils.utils import build_filename, save_scenario_file, save_video_file
         ),
     },
 )
+
 @parser_classes([MultiPartParser, FormParser])
 @api_view(['POST'])
+@jwt_auth_required  # jwt_auth_required 데코레이터 적용
+@authentication_classes([]) # 인증 클래스 비활성화: 안 하면 우리가 사용하는 users테이블이 아닌 장고 기본 auth_user 테이블로 인증 시도
+@permission_classes([])     # 권한 클래스 비활성화: 안 하면 우리가 사용하는 users테이블이 아닌 장고 기본 auth_user 테이블로 인증 시도
 def upload_post(request):
     title = request.data.get("title", "").strip()
     description = request.data.get("description", "").strip()
@@ -66,7 +74,9 @@ def upload_post(request):
     else:
         tag_list = []
 
-    uid = 1      #dummy
+    uid = int(request.user_id)      #uid 받아오기
+    if not uid:
+        return Response({'error': '유저 정보를 찾을 수 없습니다.'}, status=401)
     file_name, ts = build_filename(uid, return_ts=True)
 
     seen = set()
@@ -135,7 +145,7 @@ def upload_post(request):
         message = {
             'postId': post_id,
             'scenarioId': scenario_id,
-            'uploaderId': uid,
+            'uploaderId': uid,  # 이거로 누가 올렸는지 인증
             'tags': tags
         }
     except Exception as e:
