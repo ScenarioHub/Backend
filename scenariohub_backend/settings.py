@@ -27,7 +27,7 @@ SECRET_KEY = env.SECRET_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'scenariohub.iptime.org']
 
 
 # Application definition
@@ -133,3 +133,4 @@ REST_FRAMEWORK = {
 DATA_ROOT = BASE_DIR.parent / 'data'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+

@@ -109,8 +109,8 @@ def stream_video(request, id):
             status = 500            # 만약 위에서 직접 status를 지정하지 않았다면 기본 500 처리: 의도되지 않은 에러를 통과시키는 경우 방지
         return Response(
             data={
+                'status': status,
                 'message': str(e),
-                'status': status,  
                  },
             status=status
         )

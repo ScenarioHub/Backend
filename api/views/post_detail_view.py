@@ -64,8 +64,8 @@ def scenario_detail(request, id):
                    'stats_downloads', 'stats_views', 'stats_likes',
                    'uploader_name', 'uploader_initials', 'uploader_email', 'uploader_total_scenarios',
                    'tags']
-        strSql = f"select {','.join(columns)} from view_scenario_details where id={id}"
-        cursor.execute(strSql)
+        strSql = f"SELECT {','.join(columns)} FROM view_scenario_details WHERE id = %s"     # 수정, 기존 방식은 url에 id를 직접 넣음, 지금은 파라미터로 처리
+        cursor.execute(strSql, [id]) 
         view = cursor.fetchone()
         view = {col: val for col, val in zip(columns, view)}
         view['tags'] =[tag.strip() for tag in view['tags'].split(',')]
