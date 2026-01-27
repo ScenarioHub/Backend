@@ -1,6 +1,8 @@
 from django.db import connection
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+
+from api.decorators import jwt_auth_optional
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -10,6 +12,12 @@ from drf_yasg.utils import swagger_auto_schema
     operation_summary="시나리오 상세 조회",
     operation_description="시나리오 ID로 시나리오 상세 정보를 조회합니다.",
     manual_parameters=[
+        openapi.Parameter(
+            'Authorization', openapi.IN_HEADER,
+            description='Bearer <JWT 토큰> (옵션)',
+            type=openapi.TYPE_STRING,
+            required=False
+        ),
         openapi.Parameter(
             "id",
             openapi.IN_PATH,
@@ -56,6 +64,9 @@ from drf_yasg.utils import swagger_auto_schema
     },
 )
 @api_view(['GET'])
+@jwt_auth_optional
+@authentication_classes([])
+@permission_classes([])
 def scenario_detail(request, id):
     try:
         cursor = connection.cursor()
@@ -70,13 +81,26 @@ def scenario_detail(request, id):
         view = {col: val for col, val in zip(columns, view)}
         view['tags'] = [tag.strip() for tag in view['tags'].split(',')] if view['tags'] else []
         
-        sql_query = f"select id from users where email={view['uploader_email']}"
+        sql_query = f"select id from users where email='{view['uploader_email']}'"
         cursor.execute(sql_query)
         uid = int(cursor.fetchone()[0])
 
+        # determine if the requesting user bookmarked this scenario
+        requester_uid = getattr(request, 'user_id', None)
+        bookmarked = False
+        # find scenario_id for this post (posts.id == id)
+        cursor.execute("SELECT scenario_id FROM posts WHERE id = %s", [id])
+        sc_row = cursor.fetchone()
+        scenario_id = int(sc_row[0]) if sc_row else None
+
+        if requester_uid and scenario_id:
+            cursor.execute("SELECT 1 FROM likes WHERE user_id = %s AND scenario_id = %s", [requester_uid, scenario_id])
+            if cursor.fetchone():
+                bookmarked = True
+
         connection.commit()
         connection.close()
-        
+
         message = {
             'id': view['id'],
             'title': view['title'],
@@ -85,7 +109,7 @@ def scenario_detail(request, id):
             'code': view['code'],
             'tags': view['tags'],
             'stats': { 'downloads': view['stats_downloads'], 'views': view['stats_views'], 'likes': view['stats_likes'] },
-            'isBookmarked': False,
+            'isBookmarked': bookmarked,
             'file': { 'format': view['file_format'], 'version': view['file_version'], 'size': view['file_size']},
             'uploader': {
                 'name': view['uploader_name'],
