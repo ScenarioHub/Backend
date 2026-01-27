@@ -23,8 +23,6 @@ from drf_yasg.utils import swagger_auto_schema
                             'id': 1,
                             'map_name': 'crest-curve',
                             'description': '',
-                            # 'file_url': '',
-                            # 'img_url': '',
                         },
                     ]
                 }
@@ -41,9 +39,7 @@ def get_map_list(request):
         strSql = f"select * from maps"
         cursor.execute(strSql)
         view = cursor.fetchall()
-        print(view)
         view = [{col: val for col, val in zip(columns, view[i])} for i in range(len(view))]
-        print(view)
 
         connection.commit()
         connection.close()
@@ -52,8 +48,6 @@ def get_map_list(request):
             'id': v['id'],
             'map_name': v['map_name'],
             'description': v['description'],
-            # 'file_url': v['file_url'],
-            # 'img_url': v['img_url'],
         }
             for v in view
         ]
@@ -120,7 +114,6 @@ def get_map_preview(request):
         strSql = f"select img_url from maps where id={map_id}"
         cursor.execute(strSql)
         img_url = cursor.fetchone()[0]
-        print(img_url)
 
         connection.commit()
         connection.close()
