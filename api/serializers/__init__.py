@@ -1,2 +1,0 @@
-from .auth_serializers import RegisterSerializer, LoginSerializer
-from .post_serializers import PostListSerializer
