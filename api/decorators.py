@@ -1,8 +1,8 @@
-# decorators.py
-import jwt
+from functools import wraps
+
 from django.conf import settings
 from django.http import JsonResponse
-from functools import wraps
+import jwt
 
 def jwt_auth_required(func):
     @wraps(func)
