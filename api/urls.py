@@ -11,10 +11,10 @@ urlpatterns = [
     path('scenarios/<int:id>/download/', download_file, name='scenarios_download_list'),
     path('scenarios/<int:id>/video/', stream_video, name='scenarios_video_list'),
     path('scenarios/<int:id>/like/', toggle_like, name='scenarios_like'),
+    path('scenarios/myscenario', my_scenario, name='myscenario_list'),
     # 업로드 관련
     path('upload/post/', upload_post),
     # 지도 관련
     path('maps/list', get_map_list),
     path('maps/preview', get_map_preview),
-    
 ]
