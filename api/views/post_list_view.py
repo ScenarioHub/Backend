@@ -3,10 +3,12 @@ import math
 from django.db import connection
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+
+from api.decorators import jwt_auth_optional
 
 @swagger_auto_schema(
     method="get",
@@ -24,6 +26,18 @@ from drf_yasg.utils import swagger_auto_schema
             description="정렬 기준: popular(인기순), latest(최신순), oldest(오래된순)", 
             type=openapi.TYPE_STRING, 
             default='latest'
+        ),
+        openapi.Parameter(
+            'Authorization', openapi.IN_HEADER,
+            description='Bearer <JWT 토큰> (옵션)',
+            type=openapi.TYPE_STRING,
+            required=False
+        ),
+        openapi.Parameter(
+            'bookmarked', openapi.IN_QUERY,
+            description='1 또는 true 로 설정하면 내가 좋아요한 게시물만 반환 (로그인 필요)',
+            type=openapi.TYPE_STRING,
+            required=False
         ),
     ],
     responses={
@@ -89,6 +103,9 @@ from drf_yasg.utils import swagger_auto_schema
     },
 )
 @api_view(['GET'])
+@jwt_auth_optional
+@authentication_classes([])
+@permission_classes([])
 def post_list(request):
     """함수 기반의 Raw SQL 게시글 목록 조회
 
@@ -113,7 +130,7 @@ def post_list(request):
 
         # 정렬 조건에 따른 SQL 구문 결정
         if sort_by == 'popular':
-            order_query = "ORDER BY p.view_count DESC" # 지금은 인기순이 조회수 순인데, 좋아요 순으로 하려면 p.like_count
+            order_query = "ORDER BY p.like_count DESC" # 지금은 인기순이 조회수 순인데, 좋아요 순으로 하려면 p.like_count
         elif sort_by == 'oldest':
             order_query = "ORDER BY p.created_at ASC"
         else:                                          # 기본값은 최신순(latest)
@@ -121,24 +138,49 @@ def post_list(request):
 
         offset = (page - 1) * page_size
 
-        # 전체 게시글 개수 조회 (페이지 계산을 위한)
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM posts")
-            total_count = cursor.fetchone()[0]
+        # bookmarked 필터 여부 확인
+        bookmarked_flag = str(request.query_params.get('bookmarked', '')).lower() in ['1', 'true', 'yes']
+
+        # 전체 게시글 개수 조회 (페이지 계산을 위한) - 필터가 걸려있다면 likes 조인을 포함
+        if bookmarked_flag:
+            # 필터가 걸려있으면 로그인 필요
+            if not getattr(request, 'user_id', None):
+                return Response({'status': 401, 'message': '로그인이 필요합니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT COUNT(*) FROM posts p JOIN likes l ON p.scenario_id = l.scenario_id WHERE l.user_id = %s", [request.user_id])
+                total_count = cursor.fetchone()[0]
+        else:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT COUNT(*) FROM posts")
+                total_count = cursor.fetchone()[0]
         # 전체 페이지 수 계산
         total_pages = math.ceil(total_count / page_size) if total_count > 0 else 0
 
-        sql = f'''
-            SELECT p.id, p.title, p.description, p.created_at, p.view_count, p.like_count, p.download_count,
-                   u.name as uploader_name, u.initials as uploader_initials, u.id as uid
-            FROM posts p
-            JOIN users u ON p.uploader_id = u.id
-            {order_query}
-            LIMIT %s OFFSET %s
-        '''
+        # 게시글 조회 SQL: bookmarked 필터가 있으면 likes 조인 및 사용자 조건 추가
+        if bookmarked_flag:
+            sql_query = f'''
+                SELECT p.id, p.title, p.description, p.created_at, p.view_count, p.like_count, p.download_count,
+                       u.name as uploader_name, u.initials as uploader_initials, u.id as uid
+                FROM posts p
+                JOIN users u ON p.uploader_id = u.id
+                JOIN likes l ON p.scenario_id = l.scenario_id AND l.user_id = %s
+                {order_query}
+                LIMIT %s OFFSET %s
+            '''
+            query_params = [request.user_id, page_size, offset]
+        else:
+            sql_query = f'''
+                SELECT p.id, p.title, p.description, p.created_at, p.view_count, p.like_count, p.download_count,
+                       u.name as uploader_name, u.initials as uploader_initials, u.id as uid
+                FROM posts p
+                JOIN users u ON p.uploader_id = u.id
+                {order_query}
+                LIMIT %s OFFSET %s
+            '''
+            query_params = [page_size, offset]
 
         with connection.cursor() as cursor:
-            cursor.execute(sql, [page_size, offset])
+            cursor.execute(sql_query, query_params)
             rows = cursor.fetchall()
 
         posts = []
@@ -164,6 +206,9 @@ def post_list(request):
                 'isBookmarked': False,
             })
 
+        # optional: user id set by jwt_optional decorator (or None)
+        uid = getattr(request, 'user_id', None)
+
         if post_ids:
             # posts -> scenarios (posts.scenario_id) -> scenario_tags -> tags
             placeholder = ','.join(['%s'] * len(post_ids))
@@ -179,6 +224,23 @@ def post_list(request):
             for p in posts:
                 tlist = tags_map.get(p['id'], [])[:5]
                 p['tags'] = tlist
+
+        # If user is known, also fetch which of these posts are liked by the user
+        if uid and post_ids:
+            # If bookmarked_flag is set, all returned posts are liked by the user
+            if bookmarked_flag:
+                for p in posts:
+                    p['isBookmarked'] = True
+            else:
+                placeholder = ','.join(['%s'] * len(post_ids))
+                like_sql = f"SELECT p.id FROM posts p JOIN likes l ON p.scenario_id = l.scenario_id WHERE l.user_id = %s AND p.id IN ({placeholder})"
+                with connection.cursor() as cursor:
+                    cursor.execute(like_sql, [uid, *post_ids])
+                    liked_rows = cursor.fetchall()
+                liked_post_ids = {r[0] for r in liked_rows}
+                for p in posts:
+                    if p['id'] in liked_post_ids:
+                        p['isBookmarked'] = True
 
         return Response({
             "status": 200, 

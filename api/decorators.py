@@ -42,3 +42,41 @@ def jwt_auth_required(func):
         return func(request, *args, **kwargs)
         
     return wrapper
+
+
+def jwt_auth_optional(func):
+    """Optional JWT decorator: if Authorization header with Bearer token is present,
+    try to decode and set request.user_id. If absent or invalid, set request.user_id = None
+    and continue without returning an error.
+    """
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        print(f"\n--- [JWT OPTIONAL DEBUG START] ---")
+        print(f"1. Authorization Header: {auth_header}")
+
+        if not auth_header or not auth_header.startswith('Bearer '):
+            # No token: continue as anonymous
+            request.user_id = None
+            print("No Authorization header or not Bearer - continuing as anonymous")
+            print(f"--- [JWT OPTIONAL DEBUG END] ---\n")
+            return func(request, *args, **kwargs)
+
+        token = auth_header.split(' ')[1]
+        try:
+            clean_key = settings.SECRET_KEY.strip("'").strip('"')
+            print(f"2. Using Secret Key (first 5): {clean_key[:5]}...")
+            payload = jwt.decode(token, clean_key, algorithms=['HS256'])
+            request.user_id = payload.get('user_id')
+            print(f"3. Decode Success! User ID: {request.user_id}")
+        except jwt.ExpiredSignatureError:
+            print("Token expired - proceeding as anonymous")
+            request.user_id = None
+        except jwt.InvalidTokenError as e:
+            print(f"Invalid token ({str(e)}) - proceeding as anonymous")
+            request.user_id = None
+
+        print(f"--- [JWT OPTIONAL DEBUG END] ---\n")
+        return func(request, *args, **kwargs)
+
+    return wrapper
