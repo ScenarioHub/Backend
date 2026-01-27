@@ -1,6 +1,6 @@
 django
+django-cors-headers
 djangorestframework
-mysqlclient
 djangorestframework-simplejwt
 drf_yasg
-django-cors-headers
+mysqlclient
