@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 import env
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     'drf_yasg',                         # Swagger 사용을 위한 앱 추가
     'api',
     'rest_framework_simplejwt',         # JWT 인증을 위한 앱 추가
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',                       # CORS 처리를 위한 앱 추가: 어느 주소에서 요청이 와도 응답(외부 서버로 접근) / pip install django-cors-headers
 ]
 
@@ -136,8 +138,18 @@ STATIC_URL = 'static/'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',        # JWT 인증 사용
+        # Use our custom auth backend that rejects revoked access tokens.
+        'api.auth.authentication.RevokedTokenAuthentication',
     ],
+}
+
+# Simple JWT 설정: 액세스/리프레시 토큰 수명 및 리프레시 토큰 블랙리스트 옵션
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 DATA_ROOT = BASE_DIR.parent / 'data'

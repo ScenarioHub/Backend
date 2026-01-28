@@ -5,6 +5,8 @@ urlpatterns = [
     # 인증 관련
     path('auth/register/', register),
     path('auth/login/', login),
+    path('auth/refresh/', refresh_token),
+    path('auth/logout/', logout),
     # 시나리오 관련
     path('scenarios/explore', post_list, name='scenarios_explore_list'),
     path('scenarios/<int:id>/details/', scenario_detail, name='scenarios_details_list'),

@@ -6,8 +6,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-from api.decorators import jwt_auth_required
-
+from api.auth.decorators import jwt_auth_required
 
 @swagger_auto_schema(
     method="post",

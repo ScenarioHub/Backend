@@ -1,13 +1,12 @@
 from django.db import connection
-from rest_framework.decorators import api_view, parser_classes, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import api_view, parser_classes, authentication_classes, permission_classes
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-from api.decorators import jwt_auth_required
+from api.auth.decorators import jwt_auth_required
 from utils.utils import build_filename, save_scenario_file, save_video_file
 
 @swagger_auto_schema(

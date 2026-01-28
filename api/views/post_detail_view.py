@@ -2,10 +2,10 @@ from django.db import connection
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 
-from api.decorators import jwt_auth_optional
-
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+
+from api.auth.decorators import jwt_auth_optional
 
 @swagger_auto_schema(
     method="get",
