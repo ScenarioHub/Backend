@@ -69,7 +69,7 @@ def scenario_detail(request, id):
         update_sql = "UPDATE posts SET view_count = view_count + 1 WHERE id = %s"
         cursor.execute(update_sql, [id])
 
-        columns = ['id', 'title', 'description', 'createdAt', 'code',
+        columns = ['id', 'title', 'description', 'created_at', 'code',
                    'file_format', 'file_version', 'file_size',
                    'stats_downloads', 'stats_views', 'stats_likes',
                    'uploader_name', 'uploader_initials', 'uploader_email', 'uploader_total_scenarios',
