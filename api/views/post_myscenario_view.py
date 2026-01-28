@@ -1,12 +1,12 @@
 from django.db import connection
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-# 팀 프로젝트 공통 데코레이터 임포트
-from api.decorators import jwt_auth_required 
+from api.auth.decorators import jwt_auth_required 
 
 @swagger_auto_schema(
     method='get',
