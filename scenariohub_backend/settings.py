@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'swagger_ui',                       # custom swagger
     'drf_yasg',                         # Swagger 사용을 위한 앱 추가
     'api',
     'rest_framework_simplejwt',         # JWT 인증을 위한 앱 추가
@@ -103,6 +104,15 @@ AUTH_PASSWORD_VALIDATORS = [
 
 SWAGGER_SETTINGS = {
     "DEFAULT_MODEL_RENDERING": "example",  # 핵심: Model 대신 Example을 기본 탭으로
+    "USE_SESSION_AUTH": False,  # Django Login 비활성화
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer <access_token>",
+        }
+    },
 }
 
 

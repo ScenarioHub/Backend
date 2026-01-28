@@ -28,12 +28,6 @@ from api.decorators import jwt_auth_optional
             default='latest'
         ),
         openapi.Parameter(
-            'Authorization', openapi.IN_HEADER,
-            description='Bearer <JWT 토큰> (옵션)',
-            type=openapi.TYPE_STRING,
-            required=False
-        ),
-        openapi.Parameter(
             'bookmarked', openapi.IN_QUERY,
             description='1 또는 true 로 설정하면 내가 좋아요한 게시물만 반환 (로그인 필요)',
             type=openapi.TYPE_STRING,

@@ -4,7 +4,7 @@ import re
 from django.db import connection
 from django.http import StreamingHttpResponse
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -35,6 +35,8 @@ from drf_yasg.utils import swagger_auto_schema
     },
 )
 @api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
 def stream_video(request, id):
     status = 200
     message = 'Success'

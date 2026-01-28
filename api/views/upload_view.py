@@ -16,8 +16,6 @@ from utils.utils import build_filename, save_scenario_file, save_video_file
     operation_description="업로드한 시나리오를 공유합니다.",
     consumes=["multipart/form-data"],
     manual_parameters=[
-        openapi.Parameter("Authorization", openapi.IN_HEADER, description="Bearer <JWT 토큰>", 
-                          type=openapi.TYPE_STRING),
         openapi.Parameter("title", openapi.IN_FORM, description="Post title",
                           type=openapi.TYPE_STRING, required=True),
         openapi.Parameter("description", openapi.IN_FORM, description="Post description",

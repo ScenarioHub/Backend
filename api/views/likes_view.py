@@ -14,7 +14,6 @@ from api.decorators import jwt_auth_required
     operation_summary="시나리오 좋아요 토글",
     operation_description="로그인한 사용자가 특정 게시물(포스트)의 시나리오에 좋아요를 추가하거나 취소합니다.",
     manual_parameters=[
-        openapi.Parameter("Authorization", openapi.IN_HEADER, description="Bearer <JWT 토큰>", type=openapi.TYPE_STRING),
         openapi.Parameter("id", openapi.IN_PATH, description="Post ID (posts.id)", type=openapi.TYPE_INTEGER, required=True),
     ],
     responses={

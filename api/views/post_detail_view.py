@@ -13,12 +13,6 @@ from drf_yasg.utils import swagger_auto_schema
     operation_description="시나리오 ID로 시나리오 상세 정보를 조회합니다.",
     manual_parameters=[
         openapi.Parameter(
-            'Authorization', openapi.IN_HEADER,
-            description='Bearer <JWT 토큰> (옵션)',
-            type=openapi.TYPE_STRING,
-            required=False
-        ),
-        openapi.Parameter(
             "id",
             openapi.IN_PATH,
             description="Scenario ID",

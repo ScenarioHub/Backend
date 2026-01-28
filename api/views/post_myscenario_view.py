@@ -12,16 +12,6 @@ from api.decorators import jwt_auth_required
     method='get',
     operation_summary="내 시나리오 목록 조회",
     operation_description="직접 토큰을 입력하여 본인의 시나리오 목록을 조회합니다.",
-    # upload_view.py와 동일하게 파라미터 직접 생성
-    manual_parameters=[
-        openapi.Parameter(
-            "Authorization", 
-            openapi.IN_HEADER, 
-            description="입력 형식: Bearer <JWT 토큰>", 
-            type=openapi.TYPE_STRING,
-            required=True
-        ),
-    ],
     responses={
         200: openapi.Response(
             description="조회 성공",
