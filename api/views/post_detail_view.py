@@ -59,14 +59,20 @@ from drf_yasg.utils import swagger_auto_schema
 def scenario_detail(request, id):
     try:
         cursor = connection.cursor()
+
+        # posts 테이블의 view_count 컬럼을 업데이트합니다.
+        update_sql = "UPDATE posts SET view_count = view_count + 1 WHERE id = %s"
+        cursor.execute(update_sql, [id])
+
         columns = ['id', 'title', 'description', 'createdAt', 'code',
                    'file_format', 'file_version', 'file_size',
                    'stats_downloads', 'stats_views', 'stats_likes',
                    'uploader_name', 'uploader_initials', 'uploader_email', 'uploader_total_scenarios',
                    'tags']
-        strSql = f"select {','.join(columns)} from view_scenario_details where id={id}"
-        cursor.execute(strSql)
+        strSql = f"SELECT {','.join(columns)} FROM view_scenario_details WHERE id = %s"
+        cursor.execute(strSql,[id])        
         view = cursor.fetchone()
+
         view = {col: val for col, val in zip(columns, view)}
         view['tags'] =[tag.strip() for tag in view['tags'].split(',')]
         
