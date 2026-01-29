@@ -35,6 +35,7 @@ from api.auth.decorators import jwt_auth_optional
                         'tags': ['어린이', '안전', '센서'],
                         'stats': { 'downloads': 0, 'views': 0, 'likes': 0 },
                         'isBookmarked': False,
+                        'isOwner': False,
                         'file': { 'format': 'OpenSCENARIO', 'version': '1.2', 'size': 100},
                         'uploader': {
                             'name': 'user',
@@ -87,7 +88,9 @@ def scenario_detail(request, id):
 
         # determine if the requesting user bookmarked this scenario
         requester_uid = getattr(request, 'user_id', None)
+
         bookmarked = False
+        owner = False
         # find scenario_id for this post (posts.id == id)
         cursor.execute("SELECT scenario_id FROM posts WHERE id = %s", [id])
         sc_row = cursor.fetchone()
@@ -97,6 +100,8 @@ def scenario_detail(request, id):
             cursor.execute("SELECT 1 FROM likes WHERE user_id = %s AND scenario_id = %s", [requester_uid, scenario_id])
             if cursor.fetchone():
                 bookmarked = True
+        if uid == requester_uid:
+            owner = True
 
         connection.commit()
         connection.close()
@@ -110,6 +115,7 @@ def scenario_detail(request, id):
             'tags': view['tags'],
             'stats': { 'downloads': view['stats_downloads'], 'views': view['stats_views'], 'likes': view['stats_likes'] },
             'isBookmarked': bookmarked,
+            'isOwner': owner,
             'file': { 'format': view['file_format'], 'version': view['file_version'], 'size': view['file_size']},
             'uploader': {
                 'name': view['uploader_name'],
