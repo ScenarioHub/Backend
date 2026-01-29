@@ -83,7 +83,7 @@ def jwt_auth_optional(func):
         if not auth_header or not auth_header.startswith('Bearer '):
             # No token: continue as anonymous
             request.user_id = None
-            print("No Authorization header or not Bearer - continuing as anonymous")
+            # print("No Authorization header or not Bearer - continuing as anonymous")
             # print(f"--- [JWT OPTIONAL DEBUG END] ---\n")
             return func(request, *args, **kwargs)
 
