@@ -66,6 +66,10 @@ def scenario_detail(request, id):
         if not row:
             return Response({'status': 404, 'message': 'Scenario Not Found'}, status=404)
         file_path = row[0]
+        if file_path:
+            # 윈도우/리눅스 환경에 맞춰 경로 구분자를 자동 교정합니다.
+            file_path = os.path.normpath(file_path)
+
         code_snippet = ""
 
         # 파일 파싱 (상위 100줄)
@@ -81,9 +85,10 @@ def scenario_detail(request, id):
         # posts 테이블 view count 증가
         update_view_count_sql = "UPDATE posts SET view_count = view_count + 1 WHERE id = %s"
         cursor.execute(update_view_count_sql, [id])
-
+        
         update_snippet_sql = "UPDATE scenarios SET code_snippet = %s WHERE id = %s"
         cursor.execute(update_snippet_sql, [code_snippet, id])
+        connection.commit()
 
         columns = ['id', 'title', 'description', 'createdAt', 'code',   # 여기선 불러오는거니까 createdAt
                    'file_format', 'file_version', 'file_size',
@@ -102,7 +107,11 @@ def scenario_detail(request, id):
                  status=404)
 
         view = {col: val for col, val in zip(columns, view)}
-        view['tags'] =[tag.strip() for tag in view['tags'].split(',')]
+        
+        if view['tags']:
+            view['tags'] = [tag.strip() for tag in view['tags'].split(',')]
+        else:
+            view['tags'] = []
         
         connection.commit()
         #connection.close()

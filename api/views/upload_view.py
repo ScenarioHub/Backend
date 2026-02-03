@@ -9,8 +9,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from api.decorators import jwt_auth_required
-from utils.utils import build_filename, save_scenario_file, save_video_file           # 배포 서버용 utils 사용
-# from utils.utils_windows import build_filename, save_scenario_file, save_video_file # 로컬에서 테스트 할 때 윈도우용 utils 사용
+#from utils.utils import build_filename, save_scenario_file, save_video_file           # 배포 서버용 utils 사용
+from utils.utils_windows import build_filename, save_scenario_file, save_video_file # 로컬에서 테스트 할 때 윈도우용 utils 사용
 
 
 @swagger_auto_schema(
