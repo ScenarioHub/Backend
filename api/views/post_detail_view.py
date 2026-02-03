@@ -1,3 +1,4 @@
+import os
 from django.shortcuts import render
 from django.db import connection
 from rest_framework.decorators import api_view
@@ -27,7 +28,7 @@ from drf_yasg.utils import swagger_auto_schema
                     'message': {
                         'id': '0',
                         'title': '어린이 주행 시나리오',
-                        'createdAt': '2025-12-28 16:01:45',
+                        'created_at': '2025-12-28 16:01:45',
                         'description': '어린이 보호구역에서 다양한 돌발 상황(도로 횡단, 차 사이에서 등장 등)을 포함한 시나리오입니다.',
                         'code': '<OpenSCENARIO>...</OpenSCENARIO>',
                         'tags': ['어린이', '안전', '센서'],
@@ -59,12 +60,32 @@ from drf_yasg.utils import swagger_auto_schema
 def scenario_detail(request, id):
     try:
         cursor = connection.cursor()
+        # 파일 경로 확인: url에서 xosc 가져와야 하니까
+        cursor.execute("SELECT file_url FROM scenarios WHERE id = %s", [id])
+        row = cursor.fetchone()
+        if not row:
+            return Response({'status': 404, 'message': 'Scenario Not Found'}, status=404)
+        file_path = row[0]
+        code_snippet = ""
 
-        # posts 테이블의 view_count 컬럼을 업데이트합니다.
-        update_sql = "UPDATE posts SET view_count = view_count + 1 WHERE id = %s"
-        cursor.execute(update_sql, [id])
+        # 파일 파싱 (상위 100줄)
+        if file_path and os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    lines = [next(f) for _ in range(50)]
+                    code_snippet = "".join(lines)
+            except (StopIteration, Exception):  # 50줄 미만이면 전체
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    code_snippet = f.read()
+        
+        # posts 테이블 view count 증가
+        update_view_count_sql = "UPDATE posts SET view_count = view_count + 1 WHERE id = %s"
+        cursor.execute(update_view_count_sql, [id])
 
-        columns = ['id', 'title', 'description', 'createdAt', 'code',
+        update_snippet_sql = "UPDATE scenarios SET code_snippet = %s WHERE id = %s"
+        cursor.execute(update_snippet_sql, [code_snippet, id])
+
+        columns = ['id', 'title', 'description', 'createdAt', 'code',   # 여기선 불러오는거니까 createdAt
                    'file_format', 'file_version', 'file_size',
                    'stats_downloads', 'stats_views', 'stats_likes',
                    'uploader_name', 'uploader_initials', 'uploader_email', 'uploader_total_scenarios',
@@ -73,22 +94,33 @@ def scenario_detail(request, id):
         cursor.execute(strSql,[id])        
         view = cursor.fetchone()
 
+        if not view:
+            status = 404
+            return Response(
+                {'status': 404,
+                 'message': 'view가 없습니다.'}, 
+                 status=404)
+
         view = {col: val for col, val in zip(columns, view)}
         view['tags'] =[tag.strip() for tag in view['tags'].split(',')]
         
         connection.commit()
-        connection.close()
+        #connection.close()
         
         message = {
             'id': view['id'],
             'title': view['title'],
-            'createdAt': view['createdAt'],
+            'created_at': view['createdAt'],
             'description': view['description'],
             'code': view['code'],
             'tags': view['tags'],
-            'stats': { 'downloads': view['stats_downloads'], 'views': view['stats_views'], 'likes': view['stats_likes'] },
+            'stats': { 'downloads': view['stats_downloads'], 
+                      'views': view['stats_views'], 
+                      'likes': view['stats_likes'] },
             'isBookmarked': False,
-            'file': { 'format': view['file_format'], 'version': view['file_version'], 'size': view['file_size']},
+            'file': { 'format': view['file_format'], 
+                     'version': view['file_version'], 
+                     'size': view['file_size']},
             'uploader': {
                 'name': view['uploader_name'],
                 'initials': view['uploader_initials'],
@@ -96,17 +128,19 @@ def scenario_detail(request, id):
                 'totalScenarios': view['uploader_total_scenarios']
             }
         }
+        status = 200
+
     except Exception as e:
-        connection.rollback()
+        if connection:
+            connection.rollback()
         status = 404
         message = '404 Not Found'
-    else:
-        status = 200
     finally:
+        if cursor:
+            cursor.close()
+
         return Response(
-            data={
-                'status': status,
-                'message': message
-            },
+            data={'status': status, 
+                  'message': message},
             status=status
         )
