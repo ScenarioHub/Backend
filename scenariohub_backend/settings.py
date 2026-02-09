@@ -10,9 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-from pathlib import Path
 import os
 import env
+from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,7 +28,7 @@ SECRET_KEY = env.SECRET_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'scenariohub.iptime.org']
 
 
 # Application definition
@@ -40,9 +41,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'swagger_ui',                       # custom swagger
     'drf_yasg',                         # Swagger 사용을 위한 앱 추가
     'api',
     'rest_framework_simplejwt',         # JWT 인증을 위한 앱 추가
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',                       # CORS 처리를 위한 앱 추가: 어느 주소에서 요청이 와도 응답(외부 서버로 접근) / pip install django-cors-headers
 ]
 
@@ -103,6 +106,15 @@ AUTH_PASSWORD_VALIDATORS = [
 
 SWAGGER_SETTINGS = {
     "DEFAULT_MODEL_RENDERING": "example",  # 핵심: Model 대신 Example을 기본 탭으로
+    "USE_SESSION_AUTH": False,  # Django Login 비활성화
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer <access_token>",
+        }
+    },
 }
 
 
@@ -126,10 +138,21 @@ STATIC_URL = 'static/'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',        # JWT 인증 사용
+        # Use our custom auth backend that rejects revoked access tokens.
+        'api.auth.authentication.RevokedTokenAuthentication',
     ],
+}
+
+# Simple JWT 설정: 액세스/리프레시 토큰 수명 및 리프레시 토큰 블랙리스트 옵션
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 DATA_ROOT = BASE_DIR.parent / 'data'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+

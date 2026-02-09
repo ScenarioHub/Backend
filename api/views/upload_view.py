@@ -2,9 +2,10 @@ import os
 import jwt
 from django.shortcuts import render
 from django.db import connection
-from rest_framework.decorators import api_view, parser_classes, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import api_view, parser_classes, authentication_classes, permission_classes
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -12,15 +13,12 @@ from api.decorators import jwt_auth_required
 #from utils.utils import build_filename, save_scenario_file, save_video_file           # 배포 서버용 utils 사용
 from utils.utils_windows import build_filename, save_scenario_file, save_video_file # 로컬에서 테스트 할 때 윈도우용 utils 사용
 
-
 @swagger_auto_schema(
     method="post",
     operation_summary="시나리오 업로드",
     operation_description="업로드한 시나리오를 공유합니다.",
     consumes=["multipart/form-data"],
     manual_parameters=[
-        openapi.Parameter("Authorization", openapi.IN_HEADER, description="Bearer <JWT 토큰>", 
-                          type=openapi.TYPE_STRING),
         openapi.Parameter("title", openapi.IN_FORM, description="Post title",
                           type=openapi.TYPE_STRING, required=True),
         openapi.Parameter("description", openapi.IN_FORM, description="Post description",

@@ -1,9 +1,9 @@
 import os
 
-from django.http import StreamingHttpResponse
 from django.db import connection
-from rest_framework.decorators import api_view
+from django.http import StreamingHttpResponse
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -31,9 +31,20 @@ from drf_yasg.utils import swagger_auto_schema
                 }
             }
         ),
+        500: openapi.Response(
+            description="서버 에러",
+            examples={
+                'application/json': {
+                    'status': 500,
+                    'message': "500 Internal Server Error"
+                }
+            }
+        ),
     },
 )
 @api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
 def download_file(request, id):
     with connection.cursor() as cursor:
 
@@ -67,9 +78,23 @@ def download_file(request, id):
         response = StreamingHttpResponse(f, content_type="application/octet-stream")
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
-    except Exception as e:
+    except FileNotFoundError:
+        status = 404
         return Response(
-                data={'status': 500,
-                  'message': f"파일 읽기 오류: {str(e)}"},
-            status=500
+                data={
+                    'status': status,
+                    'message': "500 Internal Server Error"
+                },
+                status=status
+            )
+    except Exception:
+        import traceback
+        print(traceback.format_exc())
+                
+        return Response(
+                data={
+                    'status': status,
+                    'message': "500 Internal Server Error"
+                },
+                status=status
             )

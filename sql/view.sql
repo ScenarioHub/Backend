@@ -10,7 +10,7 @@ SELECT
     p.id AS id,
     p.title AS title,
     p.description AS description,
-    p.created_at AS createdAt,
+    p.created_at AS created_at,
     
     -- 작성자 정보 (Users Join)
     u.name AS uploader_name,
@@ -36,7 +36,7 @@ SELECT
     p.id AS id,
     p.title AS title,
     p.description AS description,
-    p.created_at AS createdAt,
+    p.created_at AS created_at,
     
     -- 원본 시나리오 정보 (Scenarios Join)
     s.code_snippet AS code,
@@ -73,7 +73,7 @@ SELECT
     p.title AS title,
     -- 설명 요약 (앞 100자만)
     LEFT(p.description, 100) AS summary,
-    p.created_at AS createdAt,
+    p.created_at AS created_at,
     p.download_count AS downloadCount
 FROM posts p;
 

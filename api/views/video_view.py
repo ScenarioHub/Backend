@@ -1,9 +1,10 @@
 import os
 import re
-from django.http import StreamingHttpResponse
+
 from django.db import connection
-from rest_framework.decorators import api_view
+from django.http import StreamingHttpResponse
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -34,6 +35,8 @@ from drf_yasg.utils import swagger_auto_schema
     },
 )
 @api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
 def stream_video(request, id):
     status = 200
     message = 'Success'
@@ -105,12 +108,15 @@ def stream_video(request, id):
         return response
 
     except Exception as e:
-        if status == 200: 
-            status = 500            # 만약 위에서 직접 status를 지정하지 않았다면 기본 500 처리: 의도되지 않은 에러를 통과시키는 경우 방지
+        status = 500            # 만약 위에서 직접 status를 지정하지 않았다면 기본 500 처리: 의도되지 않은 에러를 통과시키는 경우 방지
+
+        import traceback
+        print(traceback.format_exc())
+                
         return Response(
             data={
+                'status': status,
                 'message': str(e),
-                'status': status,  
                  },
             status=status
         )
