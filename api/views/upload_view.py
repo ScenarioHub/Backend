@@ -1,3 +1,6 @@
+import os
+import jwt
+from django.shortcuts import render
 from django.db import connection
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -6,8 +9,9 @@ from rest_framework.decorators import api_view, parser_classes, authentication_c
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-from api.auth.decorators import jwt_auth_required
-from utils.utils import build_filename, save_scenario_file, save_video_file
+from api.decorators import jwt_auth_required
+#from utils.utils import build_filename, save_scenario_file, save_video_file           # 배포 서버용 utils 사용
+from utils.utils_windows import build_filename, save_scenario_file, save_video_file # 로컬에서 테스트 할 때 윈도우용 utils 사용
 
 @swagger_auto_schema(
     method="post",
@@ -65,7 +69,7 @@ def upload_post(request):
     if (not title or
         not description or
         not uploaded_file):
-        return Response(data={'status': '400', 'message': '400 Bad Request'}, status=400)
+        return Response(data={'status': '400', 'message': '필수 항목을 입력하십시오.'}, status=400)
     if tags:
         tag_list = [t.strip() for t in tags.split(",") if t.strip()]
     else:
@@ -87,76 +91,91 @@ def upload_post(request):
         
         scenario_path = save_scenario_file(uploaded_file, file_name)
         video_path = save_video_file(scenario_path, file_name)
-
-
-        scenario_columns = ['owner_id', 'file_url', 'video_url',
-                    'file_format', 'file_version', 'file_size',
-                    'code_snippet', 'created_at']
-        scenario_sql = f"insert into scenarios({','.join(scenario_columns)}) values({','.join(['%s' for _ in range(len(scenario_columns))])})"
-        cursor.execute(
-            scenario_sql,
-            [uid, scenario_path, video_path, 
-             'OpenSCENARIO', '1.2', uploaded_file.size,
-             'snippet', ts]
-        )
-        scenario_id = cursor.lastrowid
-
-        post_columns = ['scenario_id', 'uploader_id', 
-                       'title', 'template_desc', 'description',
-                       'view_count', 'download_count', 'like_count', 'created_at']
-        post_sql = f"insert into posts({','.join(post_columns)}) values({','.join(['%s' for _ in range(len(post_columns))])})"
-        cursor.execute(
-            post_sql,
-            [scenario_id, uid,
-             title, "", description,
-             '0', '0', '0', ts]
-        )
-        post_id = cursor.lastrowid
-
-        # 3) tags + scenario_tags
-        if tag_list:
-            # If tags.created_at has DEFAULT CURRENT_TIMESTAMP you can omit it,
-            # but since you asked to reflect the column explicitly, we insert it.
-            values_sql = ",".join(["(%s, %s)"] * len(tag_list))
-            params = []
-            for name in tag_list:
-                params.extend([name, ts])
-
-            insert_tags_sql = (
-                f"INSERT INTO tags(name, created_at) VALUES {values_sql} "
-                f"ON DUPLICATE KEY UPDATE name = name"
+        
+        # esmini error / ffmpeg error
+        if isinstance(video_path, Exception):
+            # connection을 직접 닫아주고 즉시 리턴합니다.
+            connection.close()
+            return Response(
+                data={
+                    'status': 402, 
+                    'message': str(video_path) # "esmini error" 혹은 "ffmpeg error"
+                },
+                status=402
             )
-            cursor.execute(insert_tags_sql, params)
-
-            in_placeholders = ",".join(["%s"] * len(tag_list))
-            insert_map_sql = (
-                "INSERT IGNORE INTO scenario_tags (scenario_id, tag_id) "
-                "SELECT %s AS scenario_id, t.id AS tag_id "
-                f"FROM tags t WHERE t.name IN ({in_placeholders})"
+        else:
+            st_columns = ['owner_id', 'file_url', 'video_url',
+                        'file_format', 'file_version', 'file_size',
+                        'code_snippet', 'created_at']
+            st_sql = f"insert into scenarios({','.join(st_columns)}) values({','.join(['%s' for _ in range(len(st_columns))])})"
+            cursor.execute(
+                st_sql,
+                [uid, scenario_path, video_path, 
+                'OpenSCENARIO', '1.2', uploaded_file.size,
+                'snippet', ts]
             )
-            cursor.execute(insert_map_sql, [scenario_id, *tag_list])
+            scenario_id = cursor.lastrowid
 
-        connection.close()
+            post_columns = ['scenario_id', 'uploader_id', 
+                        'title', 'template_desc', 'description',
+                        'view_count', 'download_count', 'like_count', 'created_at']
+            post_sql = f"insert into posts({','.join(post_columns)}) values({','.join(['%s' for _ in range(len(post_columns))])})"
+            cursor.execute(
+                post_sql,
+                [scenario_id, uid,
+                title, "", description,
+                '0', '0', '0', ts]
+            )
+            post_id = cursor.lastrowid
 
-        status = 201
-        message = {
-            'postId': post_id,
-            'scenarioId': scenario_id,
-            'uploaderId': uid,  # 이거로 누가 올렸는지 인증
-            'tags': tags
-        }
+            # 3) tags + scenario_tags
+            if tag_list:
+                # If tags.created_at has DEFAULT CURRENT_TIMESTAMP you can omit it,
+                # but since you asked to reflect the column explicitly, we insert it.
+                values_sql = ",".join(["(%s, %s)"] * len(tag_list))
+                params = []
+                for name in tag_list:
+                    params.extend([name, ts])
+
+                insert_tags_sql = (
+                    f"INSERT INTO tags(name, created_at) VALUES {values_sql} "
+                    f"ON DUPLICATE KEY UPDATE name = name"
+                )
+                cursor.execute(insert_tags_sql, params)
+
+                in_placeholders = ",".join(["%s"] * len(tag_list))
+                insert_map_sql = (
+                    "INSERT IGNORE INTO scenario_tags (scenario_id, tag_id) "
+                    "SELECT %s AS scenario_id, t.id AS tag_id "
+                    f"FROM tags t WHERE t.name IN ({in_placeholders})"
+                )
+                cursor.execute(insert_map_sql, [scenario_id, *tag_list])
+
+            connection.close()
+            return Response(
+                data={
+                    'status': 201,
+                    'message': {
+                        'postId': post_id,
+                        'scenarioId': scenario_id,
+                        'uploaderId': uid,
+                        'tags': tags
+                    }
+                },
+                status=201
+            )
+        
     except Exception as e:
         connection.rollback()
-        status = 500
-        message = '500 Internal Server Error'
-
+        
         import traceback
         print(traceback.format_exc())
-    finally:
+        
+        # 에러 시 리턴
         return Response(
             data={
-                'status': status,
-                'message': message
+                'status': 500,
+                'message': '500 Internal Server Error'
             },
-            status=status
+            status=500
         )

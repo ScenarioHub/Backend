@@ -196,7 +196,8 @@ def login(request):
         # compute expiry
         try:
             exp_ts = int(refresh.get('exp'))
-            expires_at = datetime.fromtimestamp(exp_ts, tz=timezone.utc)
+            import datetime as dt_module
+            expires_at = datetime.fromtimestamp(exp_ts, tz=dt_module.timezone.utc)
         except Exception:
             rlt = None
             if hasattr(settings, 'SIMPLE_JWT') and isinstance(settings.SIMPLE_JWT, dict):
@@ -303,7 +304,8 @@ def refresh_token(request):
             # compute expires_at from token if available
             try:
                 exp_ts = int(old_access.get('exp'))
-                old_expires = datetime.fromtimestamp(exp_ts, tz=timezone.utc)
+                import datetime as dt_module
+                old_expires = datetime.fromtimestamp(exp_ts, tz=dt_module.timezone.utc)
             except Exception:
                 old_expires = None
 
@@ -398,7 +400,8 @@ def logout(request):
                 fingerprint = hashlib.md5(old_access_token.encode()).hexdigest()
             try:
                 exp_ts = int(old_access.get('exp'))
-                old_expires = datetime.fromtimestamp(exp_ts, tz=timezone.utc)
+                import datetime as dt_module
+                old_expires = datetime.fromtimestamp(exp_ts, tz=dt_module.timezone.utc)
             except Exception:
                 old_expires = None
 
