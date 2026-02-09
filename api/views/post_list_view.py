@@ -28,7 +28,7 @@ from api.auth.decorators import jwt_auth_optional
             default='latest'
         ),
         openapi.Parameter(
-            'bookmarked', openapi.IN_QUERY,
+            'liked', openapi.IN_QUERY,
             description='1 또는 true 로 설정하면 내가 좋아요한 게시물만 반환 (로그인 필요)',
             type=openapi.TYPE_STRING,
             required=False
@@ -57,7 +57,7 @@ from api.auth.decorators import jwt_auth_optional
                                     "uploaderId": 1
                                 },
                                 "tags": ["55", "555"],
-                                "isBookmarked": False
+                                "isLiked": False
                             },
                             {
                                 "id": 27,
@@ -74,7 +74,7 @@ from api.auth.decorators import jwt_auth_optional
                                     "uploaderId": 1
                                 },
                                 "tags": [],
-                                "isBookmarked": False
+                                "isLiked": False
                             },
                         ],
                         "totalPages": 3,
@@ -133,10 +133,10 @@ def post_list(request):
         offset = (page - 1) * page_size
 
         # bookmarked 필터 여부 확인
-        bookmarked_flag = str(request.query_params.get('bookmarked', '')).lower() in ['1', 'true', 'yes']
+        liked_flag = str(request.query_params.get('liked', '')).lower() in ['1', 'true', 'yes']
 
         # 전체 게시글 개수 조회 (페이지 계산을 위한) - 필터가 걸려있다면 likes 조인을 포함
-        if bookmarked_flag:
+        if liked_flag:
             # 필터가 걸려있으면 로그인 필요
             if not getattr(request, 'user_id', None):
                 return Response({'status': 401, 'message': '로그인이 필요합니다.'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -151,7 +151,7 @@ def post_list(request):
         total_pages = math.ceil(total_count / page_size) if total_count > 0 else 0
 
         # 게시글 조회 SQL: bookmarked 필터가 있으면 likes 조인 및 사용자 조건 추가
-        if bookmarked_flag:
+        if liked_flag:
             sql_query = f'''
                 SELECT p.id, p.title, p.description, p.created_at, p.view_count, p.like_count, p.download_count,
                        u.name as uploader_name, u.initials as uploader_initials, u.id as uid
@@ -197,7 +197,7 @@ def post_list(request):
                     'uploaderId': r[9]
                 },
                 'tags': '',
-                'isBookmarked': False,
+                'isLiked': False,
             })
 
         # optional: user id set by jwt_optional decorator (or None)
@@ -222,9 +222,9 @@ def post_list(request):
         # If user is known, also fetch which of these posts are liked by the user
         if uid and post_ids:
             # If bookmarked_flag is set, all returned posts are liked by the user
-            if bookmarked_flag:
+            if liked_flag:
                 for p in posts:
-                    p['isBookmarked'] = True
+                    p['isLiked'] = True
             else:
                 placeholder = ','.join(['%s'] * len(post_ids))
                 like_sql = f"SELECT p.id FROM posts p JOIN likes l ON p.scenario_id = l.scenario_id WHERE l.user_id = %s AND p.id IN ({placeholder})"
@@ -234,7 +234,7 @@ def post_list(request):
                 liked_post_ids = {r[0] for r in liked_rows}
                 for p in posts:
                     if p['id'] in liked_post_ids:
-                        p['isBookmarked'] = True
+                        p['isLiked'] = True
 
         return Response({
             "status": 200, 
