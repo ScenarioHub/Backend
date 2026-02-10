@@ -17,7 +17,31 @@ from api.auth.decorators import jwt_auth_required
     manual_parameters=[
         openapi.Parameter('job_uuid', openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True, description="작업 UUID"),
     ],
-    responses={200: "조회 성공", 404: "데이터 없음"}
+    responses={
+        200: openapi.Response(
+            description="조회 성공", 
+            examples={
+                'application/json': {
+                    "status": 200,
+                    "data": {
+                        "description": "시나리오 설명",
+                        "mapId": 1,
+                        "scenarioId": 1,
+                        "filePath": "C:/Users/user/Desktop/scenario/20260127_220824_2.xosc"
+                    }
+              }
+            }
+        ),
+               404: openapi.Response(
+                   description="데이터 없음",
+                   examples={
+                       'application/json': {
+                           "status": 404,
+                           "message": "데이터 없음 (UID: 1, UUID: abcd-efgh-ijkl-mnop)"
+                       }
+                   }
+                ),
+    }
 )
 @api_view(['GET'])
 @jwt_auth_required
