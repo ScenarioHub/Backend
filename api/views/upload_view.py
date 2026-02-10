@@ -102,7 +102,27 @@ def upload_post(request):
                 },
                 status=402
             )
-        else:
+        # 파싱
+        code_snippet = ""
+        if scenario_path and os.path.exists(scenario_path):
+            try:
+                with open(scenario_path, 'r', encoding='utf-8') as f:
+                    # 상위 50줄 파싱 로직 통합
+                    lines = []
+                    for _ in range(50):
+                        line = f.readline()
+                        if not line: break
+                        lines.append(line)
+                    code_snippet = "".join(lines)
+            except Exception:
+                # 50줄 읽기 실패 시 전체 읽기 시도
+                try:
+                    with open(scenario_path, 'r', encoding='utf-8') as f:
+                        code_snippet = f.read()
+                except:
+                    code_snippet = "파일 내용을 읽을 수 없습니다."
+
+            # scenario 테이블 저장장
             st_columns = ['owner_id', 'file_url', 'video_url',
                         'file_format', 'file_version', 'file_size',
                         'code_snippet', 'created_at']
@@ -111,10 +131,11 @@ def upload_post(request):
                 st_sql,
                 [uid, scenario_path, video_path, 
                 'OpenSCENARIO', '1.2', uploaded_file.size,
-                'snippet', ts]
+                code_snippet, ts]
             )
             scenario_id = cursor.lastrowid
 
+            # posts 테이블 저장
             post_columns = ['scenario_id', 'uploader_id', 
                         'title', 'template_desc', 'description',
                         'view_count', 'download_count', 'like_count', 'created_at']
@@ -123,7 +144,7 @@ def upload_post(request):
                 post_sql,
                 [scenario_id, uid,
                 title, "", description,
-                '0', '0', '0', ts]
+                0, 0, 0, ts]
             )
             post_id = cursor.lastrowid
 
