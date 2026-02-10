@@ -1,3 +1,3 @@
 def generator(description: str, map_id: int) -> str:
     pass
-    return "file/path/"
+    return "/home/scenariohub/ScenarioHub/data/xosc/cut-in.xosc"

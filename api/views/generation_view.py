@@ -34,7 +34,7 @@ from utils.tasks import thread_start_generation
                     'status': 201,
                     'message': {
                         'jobId': 'uuid',
-                        'status': 'pending',
+                        'state': 'pending',
                     }
                 }
             }
@@ -82,7 +82,7 @@ def start_generate_scenario(request):
 
         data = {
             'jobId': job_uuid, 
-            'status': 'pending'
+            'state': 'pending'
         }
         return Response({'status': 201, 'message': data}, status=201)
 
@@ -107,7 +107,7 @@ def start_generate_scenario(request):
                     'status': 200,
                     'message': {
                         'jobId': '<uuid>',
-                        'status': 'running',
+                        'state': 'running',
                         'scenarioId': 12,
                         'mapId': 1
                     }
@@ -121,21 +121,21 @@ def start_generate_scenario(request):
 @jwt_auth_optional
 @authentication_classes([])
 @permission_classes([])
-def get_generating_state(request, job_uuid):
+def get_generating_state(request, jobId):
     """Get generation job status by job_uuid."""
     try:
         # Authentication is optional for generation service; allow anonymous polling.
         with connection.cursor() as cursor:
-            cursor.execute("SELECT id, user_id, description, map_id, status, scenario_id FROM generation_jobs WHERE job_uuid = %s", [job_uuid])
+            cursor.execute("SELECT id, user_id, description, map_id, status, scenario_id FROM generation_jobs WHERE job_uuid = %s", [jobId])
             row = cursor.fetchone()
             if not row:
                 return Response({'status': 404, 'message': 'job not found'}, status=404)
 
-            (gid, owner_id, description_val, map_id_val, status, scenario_id) = row
+            (gid, owner_id, description_val, map_id_val, state, scenario_id) = row
 
             data = {
-                'jobId': job_uuid,
-                'status': status,
+                'jobId': jobId,
+                'state': state,
                 'scenarioId': int(scenario_id) if scenario_id else None,
                 'mapId': map_id_val,
             }

@@ -4,7 +4,7 @@ from django.db import connection
 from django.utils import timezone
 
 from utils.generator import generator
-from utils.utils import build_filename, save_scenario_file
+from utils.utils import build_filename, save_scenario_file, save_video_file
 
 def thread_start_generation(job_uuid):
     try:
@@ -29,7 +29,7 @@ def thread_start_generation(job_uuid):
         xosc_path = generator(description, map_id)
         file_size = os.path.getsize(xosc_path)
         file_name = build_filename(user_id)
-        video_path = save_scenario_file(xosc_path, file_name)
+        video_path = save_video_file(xosc_path, file_name)
         if isinstance(video_path, Exception):
             return 
         
@@ -43,11 +43,10 @@ def thread_start_generation(job_uuid):
         scenario_id = cursor.lastrowid
 
         cursor.execute(
-            "update generation_jobs set scenario_id=%s, status=%s where job_uuid",
+            "update generation_jobs set scenario_id=%s, status=%s where job_uuid=%s",
             [scenario_id, 'done', job_uuid]
         )
         
-        cursor.commit()
         cursor.close()
     except Exception:
         import traceback
