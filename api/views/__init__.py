@@ -9,3 +9,4 @@ from .likes_view import toggle_like
 from .post_myscenario_view import my_scenario
 from .post_delete import delete_post
 from .generation_view import start_generate_scenario, get_generating_state
+from .generate_to_upload_view import get_scenario_data, upload_from_generation

@@ -16,7 +16,9 @@ urlpatterns = [
     path('scenarios/<int:id>/delete/', delete_post, name='scenarios_delete'),
     path('scenarios/myscenario', my_scenario, name='myscenario_list'),
     # 업로드 관련
-    path('upload/post/', upload_post),
+    path('upload/post/', upload_post, name='upload_post'),
+    path('upload/data', get_scenario_data, name='data_from_generate'),
+    path('upload/from_generation/', upload_from_generation, name='upload_from_generation'),
     # 지도 관련
     path('maps/list', get_map_list),
     path('maps/preview', get_map_preview),
