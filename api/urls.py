@@ -15,6 +15,7 @@ urlpatterns = [
     path('scenarios/<int:id>/like/', toggle_like, name='scenarios_like'),
     path('scenarios/<int:id>/delete/', delete_post, name='scenarios_delete'),
     path('scenarios/myscenario', my_scenario, name='myscenario_list'),
+    path('scenarios/stats/', get_scenario_stats, name='scenarios_stats'),
     # 업로드 관련
     path('upload/post/', upload_post, name='upload_post'),
     path('upload/data', get_scenario_data, name='data_from_generate'),
