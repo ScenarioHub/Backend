@@ -106,9 +106,11 @@ def jwt_auth_optional(func):
         except jwt.ExpiredSignatureError:
             print("Token expired - proceeding as anonymous")
             request.user_id = None
+            return JsonResponse({'error': '토큰 만료'}, status=401)
         except jwt.InvalidTokenError as e:
             print(f"Invalid token ({str(e)}) - proceeding as anonymous")
             request.user_id = None
-            return JsonResponse({'error': '토큰 만료'}, status=401)
+            return JsonResponse({'error': '잘못된 토큰'}, status=401)
+        return func(request, *args, **kwargs)
 
     return wrapper

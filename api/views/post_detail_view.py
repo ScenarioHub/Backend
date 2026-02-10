@@ -97,7 +97,7 @@ def scenario_detail(request, id):
         cursor.execute(update_snippet_sql, [code_snippet, id])
         connection.commit()
 
-        columns = ['id', 'title', 'description', 'createdAt', 'code',   # 여기선 불러오는거니까 createdAt
+        columns = ['id', 'title', 'description', 'created_at', 'code',   # 여기선 불러오는거니까 created_at
                    'file_format', 'file_version', 'file_size',
                    'stats_downloads', 'stats_views', 'stats_likes',
                    'uploader_name', 'uploader_initials', 'uploader_email', 'uploader_total_scenarios',
@@ -147,14 +147,15 @@ def scenario_detail(request, id):
         message = {
             'id': view['id'],
             'title': view['title'],
-            'created_at': view['createdAt'],
+            'created_at': view['created_at'],
             'description': view['description'],
             'code': view['code'],
             'tags': view['tags'],
             'stats': { 'downloads': view['stats_downloads'], 
                       'views': view['stats_views'], 
                       'likes': view['stats_likes'] },
-            'isLiked': False,
+            'isLiked': liked,
+            'isOwner': owner,
             'file': { 'format': view['file_format'], 
                      'version': view['file_version'], 
                      'size': view['file_size']},

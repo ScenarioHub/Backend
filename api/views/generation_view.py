@@ -7,7 +7,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-from api.decorators import jwt_auth_optional
+from api.auth.decorators import jwt_auth_optional
 from utils.tasks import thread_start_generation
 
 
