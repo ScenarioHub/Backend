@@ -1,0 +1,60 @@
+import os
+
+from django.db import connection
+from django.utils import timezone
+
+from utils.generator import generator
+from utils.utils import build_filename, save_scenario_file
+
+def thread_start_generation(job_uuid):
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            "select user_id, description, map_id, status from generation_jobs where job_uuid=%s for update",
+            [job_uuid]
+        )
+        row = cursor.fetchone()
+
+        if not row:
+            return
+
+        user_id, description, map_id, status = row
+
+        if status == "running":
+            print(f"process_generation_job: job already running {job_uuid}")
+            return
+
+        cursor.execute("update generation_jobs set status=%s where job_uuid=%s", ['running', job_uuid])
+
+        xosc_path = generator(description, map_id)
+        file_size = os.path.getsize(xosc_path)
+        file_name = build_filename(user_id)
+        video_path = save_scenario_file(xosc_path, file_name)
+        if isinstance(video_path, Exception):
+            return 
+        
+
+        scenario_columns = ['owner_id', 'file_url', 'video_url', 'file_format', 'file_version', 'file_size', 'code_snippet', 'created_at']
+        values = [user_id, xosc_path, video_path, 'OpenSCENARIO', '1.2', file_size, None, timezone.now()]
+        placeholders = ','.join(['%s'] * len(values))
+        insert_sql = f"INSERT INTO scenarios({','.join(scenario_columns)}) VALUES({placeholders})"
+
+        cursor.execute(insert_sql, values)
+        scenario_id = cursor.lastrowid
+
+        cursor.execute(
+            "update generation_jobs set scenario_id=%s, status=%s where job_uuid",
+            [scenario_id, 'done', job_uuid]
+        )
+        
+        cursor.commit()
+        cursor.close()
+    except Exception:
+        import traceback
+        print(traceback.format_exc())
+
+        cursor.execute(
+            "update generation_jobs set status=%s where job_uuid=%s",
+            ['failed',job_uuid]
+        )
+    return

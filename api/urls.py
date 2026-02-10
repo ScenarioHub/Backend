@@ -16,5 +16,7 @@ urlpatterns = [
     # 지도 관련
     path('maps/list', get_map_list),
     path('maps/preview', get_map_preview),
-    
+    # 시나리오 생성 (비동기)
+    path('generator/generate/', start_generate_scenario),
+    path('generator/<str:jobId>/state/', get_generating_state),
 ]
