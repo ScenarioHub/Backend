@@ -8,3 +8,4 @@ from .map_view import get_map_list, get_map_preview
 from .likes_view import toggle_like
 from .post_myscenario_view import my_scenario
 from .post_delete import delete_post
+from .generation_view import start_generate_scenario, get_generating_state
