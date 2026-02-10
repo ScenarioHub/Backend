@@ -109,8 +109,6 @@ def jwt_auth_optional(func):
         except jwt.InvalidTokenError as e:
             print(f"Invalid token ({str(e)}) - proceeding as anonymous")
             request.user_id = None
-
-        # print(f"--- [JWT OPTIONAL DEBUG END] ---\n")
-        return func(request, *args, **kwargs)
+            return JsonResponse({'error': '토큰 만료'}, status=401)
 
     return wrapper
