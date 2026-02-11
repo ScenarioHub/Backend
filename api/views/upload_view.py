@@ -10,8 +10,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from api.auth.decorators import jwt_auth_required
-from utils.utils import build_filename, save_scenario_file, save_video_file           # 배포 서버용 utils 사용
-
+#from utils.utils import build_filename, parse_scenario_snippet, save_scenario_file, save_video_file           # 배포 서버용 utils 사용
+from utils.utils_windows import build_filename, parse_scenario_snippet, save_scenario_file, save_video_file
 @swagger_auto_schema(
     method="post",
     operation_summary="시나리오 업로드",
@@ -89,6 +89,7 @@ def upload_post(request):
         print(tags)
         
         scenario_path = save_scenario_file(uploaded_file, file_name)
+        code_snippet = parse_scenario_snippet(scenario_path)
         video_path = save_video_file(scenario_path, file_name)
         
         # esmini error / ffmpeg error
@@ -102,88 +103,69 @@ def upload_post(request):
                 },
                 status=402
             )
-        # 파싱
-        code_snippet = ""
-        if scenario_path and os.path.exists(scenario_path):
-            try:
-                with open(scenario_path, 'r', encoding='utf-8') as f:
-                    # 상위 50줄 파싱 로직 통합
-                    lines = []
-                    for _ in range(50):
-                        line = f.readline()
-                        if not line: break
-                        lines.append(line)
-                    code_snippet = "".join(lines)
-            except Exception:
-                # 50줄 읽기 실패 시 전체 읽기 시도
-                try:
-                    with open(scenario_path, 'r', encoding='utf-8') as f:
-                        code_snippet = f.read()
-                except:
-                    code_snippet = "파일 내용을 읽을 수 없습니다."
 
-            # scenario 테이블 저장장
-            st_columns = ['owner_id', 'file_url', 'video_url',
-                        'file_format', 'file_version', 'file_size',
-                        'code_snippet', 'created_at']
-            st_sql = f"insert into scenarios({','.join(st_columns)}) values({','.join(['%s' for _ in range(len(st_columns))])})"
-            cursor.execute(
-                st_sql,
-                [uid, scenario_path, video_path, 
-                'OpenSCENARIO', '1.2', uploaded_file.size,
-                code_snippet, ts]
+        # scenario 테이블 저장장
+        st_columns = ['owner_id', 'file_url', 'video_url',
+                    'file_format', 'file_version', 'file_size',
+                    'code_snippet', 'created_at']
+        st_sql = f"insert into scenarios({','.join(st_columns)}) values({','.join(['%s' for _ in range(len(st_columns))])})"
+        cursor.execute(
+            st_sql,
+            [uid, scenario_path, video_path, 
+            'OpenSCENARIO', '1.2', uploaded_file.size,
+            code_snippet, ts]
+        )
+        scenario_id = cursor.lastrowid
+
+        # posts 테이블 저장
+        post_columns = ['scenario_id', 'uploader_id', 
+                    'title', 'template_desc', 'description',
+                    'view_count', 'download_count', 'like_count', 'created_at']
+        post_sql = f"insert into posts({','.join(post_columns)}) values({','.join(['%s' for _ in range(len(post_columns))])})"
+        cursor.execute(
+            post_sql,
+            [scenario_id, uid,
+            title, "", description,
+            0, 0, 0, ts]
+        )
+        post_id = cursor.lastrowid
+
+        # 3) tags + scenario_tags
+        if tag_list:
+            # If tags.created_at has DEFAULT CURRENT_TIMESTAMP you can omit it,
+            # but since you asked to reflect the column explicitly, we insert it.
+            values_sql = ",".join(["(%s, %s)"] * len(tag_list))
+            params = []
+            for name in tag_list:
+                params.extend([name, ts])
+
+            insert_tags_sql = (
+                f"INSERT INTO tags(name, created_at) VALUES {values_sql} "
+                f"ON DUPLICATE KEY UPDATE name = name"
             )
-            scenario_id = cursor.lastrowid
+            cursor.execute(insert_tags_sql, params)
 
-            # posts 테이블 저장
-            post_columns = ['scenario_id', 'uploader_id', 
-                        'title', 'template_desc', 'description',
-                        'view_count', 'download_count', 'like_count', 'created_at']
-            post_sql = f"insert into posts({','.join(post_columns)}) values({','.join(['%s' for _ in range(len(post_columns))])})"
-            cursor.execute(
-                post_sql,
-                [scenario_id, uid,
-                title, "", description,
-                0, 0, 0, ts]
+            in_placeholders = ",".join(["%s"] * len(tag_list))
+            insert_map_sql = (
+                "INSERT IGNORE INTO scenario_tags (scenario_id, tag_id) "
+                "SELECT %s AS scenario_id, t.id AS tag_id "
+                f"FROM tags t WHERE t.name IN ({in_placeholders})"
             )
-            post_id = cursor.lastrowid
+            cursor.execute(insert_map_sql, [scenario_id, *tag_list])
 
-            # 3) tags + scenario_tags
-            if tag_list:
-                # If tags.created_at has DEFAULT CURRENT_TIMESTAMP you can omit it,
-                # but since you asked to reflect the column explicitly, we insert it.
-                values_sql = ",".join(["(%s, %s)"] * len(tag_list))
-                params = []
-                for name in tag_list:
-                    params.extend([name, ts])
-
-                insert_tags_sql = (
-                    f"INSERT INTO tags(name, created_at) VALUES {values_sql} "
-                    f"ON DUPLICATE KEY UPDATE name = name"
-                )
-                cursor.execute(insert_tags_sql, params)
-
-                in_placeholders = ",".join(["%s"] * len(tag_list))
-                insert_map_sql = (
-                    "INSERT IGNORE INTO scenario_tags (scenario_id, tag_id) "
-                    "SELECT %s AS scenario_id, t.id AS tag_id "
-                    f"FROM tags t WHERE t.name IN ({in_placeholders})"
-                )
-                cursor.execute(insert_map_sql, [scenario_id, *tag_list])
-
-            connection.close()
-            return Response(
-                data={
-                    'status': 201,
-                    'message': {
-                        'postId': post_id,
-                        'scenarioId': scenario_id,
-                        'uploaderId': uid,
-                        'tags': tags
-                    }
-                },
-                status=201
-            )
+        connection.close()
+        return Response(
+            data={
+                'status': 201,
+                'message': {
+                    'postId': post_id,
+                    'scenarioId': scenario_id,
+                    'uploaderId': uid,
+                    'tags': tags
+                }
+            },
+            status=201
+        )
         
     except Exception as e:
         connection.rollback()

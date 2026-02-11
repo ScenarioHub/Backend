@@ -13,6 +13,28 @@ def build_filename(user_id, return_ts=False):
 
     return (file_name, created_at.isoformat()) if return_ts else file_name
 
+def parse_scenario_snippet(file_path, line_limit=50): # 50줄 파싱
+    code_snippet = ""
+    if not (file_path and os.path.exists(file_path)):
+        return "파일을 찾을 수 없습니다."
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            lines = []
+            for _ in range(line_limit):
+                line = f.readline()
+                if not line: break
+                lines.append(line)
+            code_snippet = "".join(lines)
+    except Exception:
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                code_snippet = f.read()
+        except Exception as e:
+            code_snippet = f"내용을 읽는 중 오류가 발생했습니다: {str(e)}"
+    
+    return code_snippet
+
 def save_scenario_file(upload_file, file_name):
     scenario_dir = settings.DATA_ROOT / 'scenario'
     scenario_path = scenario_dir / (file_name + ".xosc")
