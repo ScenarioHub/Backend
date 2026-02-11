@@ -23,7 +23,7 @@ from api.auth.decorators import jwt_auth_required
             examples={
                 'application/json': {
                     "status": 200,
-                    "data": {
+                    "message": {
                         "description": "시나리오 설명",
                         "mapId": 1,
                         "scenarioId": 1,
