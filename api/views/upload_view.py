@@ -10,8 +10,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from api.auth.decorators import jwt_auth_required
-#from utils.utils import build_filename, parse_scenario_snippet, save_scenario_file, save_video_file           # 배포 서버용 utils 사용
-from utils.utils_windows import build_filename, parse_scenario_snippet, save_scenario_file, save_video_file
+from utils.utils import build_filename, parse_scenario_snippet, save_scenario_file, save_video_file           # 배포 서버용 utils 사용
+
 @swagger_auto_schema(
     method="post",
     operation_summary="시나리오 업로드",
