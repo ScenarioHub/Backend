@@ -14,7 +14,7 @@ from drf_yasg import openapi
             examples={
                 'application/json': {
                     "status": 200,
-                    "data": {
+                    "message": {
                         "shared_scenarios": 2026,
                         "active_users": 2,
                         "total_downloads": 11
@@ -66,5 +66,5 @@ def get_scenario_stats(request):
 
     return Response({
             "status": 200,
-            "data": data
+            "message": data
         }, status=200)
