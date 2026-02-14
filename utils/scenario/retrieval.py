@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import os
+import json
 import re
 import threading
+import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -42,6 +45,10 @@ DEFAULT_REF_ENTITY = os.environ.get("SCENARIO_DEFAULT_ENTITY", "Target")
 
 # 임베딩 입력 prefix(선택)
 PREFIX = os.environ.get("SCENARIO_EMB_PREFIX", "DESC: ").strip()
+
+# Gemini 설정
+GEMINI_API_KEY = "키 추가하세요"
+GEMINI_MODEL = "gemini-2.5-flash"
 
 NORMALIZE = True
 
@@ -149,11 +156,15 @@ def retrieve_scenario_items(description: str) -> List[ScenarioItem]:
 # -----------------------------
 def _build_query_cfg(description: str) -> Dict[str, str]:
     """
-    현재는 NLU가 없으니 최대한 안전한 기본값만 만든다.
+    LLM 분해를 우선 시도하고 실패하면 정규식 기반 기본값을 만든다.
 
     나중에 너희가 슬롯 추출기를 붙이면 여기만 교체하면 됨.
     """
     desc = description.strip()
+
+    llm_cfg = _build_query_cfg_llm(desc)
+    if llm_cfg is not None:
+        return llm_cfg
 
     # 아주 단순한 힌트 추출(있으면 도움됨). 없으면 빈 문자열.
     # 예: "30m/s", "30 m/s", "30mps"
@@ -171,6 +182,104 @@ def _build_query_cfg(description: str) -> Dict[str, str]:
         "behaviors": "",       # "
     }
 
+
+def _build_query_cfg_llm(description: str) -> Optional[Dict[str, str]]:
+    """
+    Gemini API를 사용해 description을 파트별 텍스트로 분해한다.
+    실패 시 None 반환.
+    """
+    if not GEMINI_API_KEY:
+        return None
+
+    prompt = _load_gemini_prompt(description)
+
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+    )
+    payload = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": prompt}],
+            }
+        ],
+        "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": 512,
+        },
+    }
+
+    try:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return None
+
+    try:
+        text = (
+            data["candidates"][0]["content"]["parts"][0]["text"]
+            if data.get("candidates")
+            else ""
+        )
+        text = (text or "").strip()
+        if not text:
+            return None
+
+        # LLM이 코드블록으로 감쌀 수 있으니 제거
+        if text.startswith("```"):
+            text = text.strip("`")
+            # 간단히 첫/마지막 라인 제거
+            lines = [ln for ln in text.splitlines() if ln.strip()]
+            if len(lines) >= 2:
+                text = "\n".join(lines[1:])
+
+        cfg = json.loads(text)
+    except Exception:
+        return None
+
+    # 키 보정
+    keys = ["total", "actors", "agents", "positions", "speeds", "conditions", "behaviors"]
+    out: Dict[str, str] = {}
+    for k in keys:
+        v = cfg.get(k, "")
+        out[k] = str(v).strip() if v is not None else ""
+    if not out.get("total"):
+        out["total"] = description
+    return out
+
+
+def _load_gemini_prompt(description: str) -> str:
+    """
+    프롬프트를 파일에서 불러오고, 없으면 기본 문자열 사용.
+    """
+    default_prompt = (
+        "You are a parser that extracts scenario info into fixed JSON fields.\n"
+        "Return ONLY a JSON object with keys:\n"
+        "total, actors, agents, positions, speeds, conditions, behaviors.\n"
+        "Rules:\n"
+        "- Always include all keys.\n"
+        "- Use empty string if unknown.\n"
+        "- Do not add extra keys or commentary.\n"
+        "- Keep values short and specific.\n"
+        "- Keep language same as input.\n\n"
+        "Input:\n{description}\n\n"
+        "Output must be raw JSON only."
+    )
+
+    prompt_path = Path(__file__).resolve().parent / "prompts" / "gemini_split.txt"
+    try:
+        text = prompt_path.read_text(encoding="utf-8")
+    except Exception:
+        text = default_prompt
+
+    return text.replace("{description}", description)
 
 def _extract_speed(text: str) -> Optional[str]:
     m = re.search(r"(\d+(?:\.\d+)?)\s*(m/s|mps)", text, re.IGNORECASE)
