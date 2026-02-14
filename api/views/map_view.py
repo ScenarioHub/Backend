@@ -89,7 +89,7 @@ def get_map_list(request):
             examples={
                 'image/png': {
                     'status': 200,
-                    'data': 'Binary data'
+                    'message': 'Binary data'
                 }
             }
         ),

@@ -70,13 +70,24 @@ def get_scenario_data(request):
 
         return Response({
             'status': 200,
-            'data': {
+            'message': {
                 'description': row[0], 
                 'mapId': row[1], 
                 'scenarioId': row[2],
                 'filePath': (row[3])
             }
         }, status=200)
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+
+        return Response(
+            data={
+                'status': 500,
+                'message': "500 Internal Server Error"
+            },
+            status=500
+        )
     finally:
         connection.close()
 

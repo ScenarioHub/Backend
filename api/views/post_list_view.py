@@ -28,7 +28,7 @@ from api.auth.decorators import jwt_auth_optional
             default='latest'
         ),
         openapi.Parameter(
-            'liked', openapi.IN_QUERY,
+            'isLiked', openapi.IN_QUERY,
             description='1 또는 true 로 설정하면 내가 좋아요한 게시물만 반환 (로그인 필요)',
             type=openapi.TYPE_STRING,
             required=False
@@ -133,7 +133,7 @@ def post_list(request):
         offset = (page - 1) * page_size
 
         # bookmarked 필터 여부 확인
-        liked_flag = str(request.query_params.get('liked', '')).lower() in ['1', 'true', 'yes']
+        liked_flag = str(request.query_params.get('isLiked', '')).lower() in ['1', 'true', 'yes']
 
         # 전체 게시글 개수 조회 (페이지 계산을 위한) - 필터가 걸려있다면 likes 조인을 포함
         if liked_flag:

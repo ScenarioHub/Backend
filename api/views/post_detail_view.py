@@ -17,7 +17,7 @@ from api.auth.decorators import jwt_auth_optional
         openapi.Parameter(
             "id",
             openapi.IN_PATH,
-            description="Scenario ID",
+            description="Post ID",
             type=openapi.TYPE_INTEGER,
             required=True,
         )
@@ -65,6 +65,7 @@ from api.auth.decorators import jwt_auth_optional
 @authentication_classes([])
 @permission_classes([])
 def scenario_detail(request, id):
+    message = ""
     try:
         cursor = connection.cursor()
 
@@ -150,6 +151,9 @@ def scenario_detail(request, id):
             connection.rollback()
         status = 404
         message = '404 Not Found'
+
+        import traceback
+        print(traceback.format_exc())
     finally:
         if cursor:
             cursor.close()
