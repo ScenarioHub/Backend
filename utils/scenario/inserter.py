@@ -53,20 +53,24 @@ def _insert_item(root: ET._Element, item: ScenarioItem) -> None:
 
     frag = _parse_fragment(item.xml)
 
-    if t in ("agent", "actor"):
-        _insert_into_entities(root, frag)
+    if t == "agent":
+        _insert_agent(root, frag)
         return
 
     if t in ("pos", "speed"):
         _insert_into_init_actions_private(root, item.ref_entity, frag)
         return
 
+    if t == "actor":
+        _insert_actor(root, item.ref_entity, frag)
+        return
+
     if t in ("condition",):
-        _insert_into_start_trigger(root, frag)
+        _insert_condition(root, item.ref_entity, frag)
         return
 
     if t in ("behavior",):
-        _insert_into_maneuver_group(root, item.ref_entity, frag)
+        _insert_behavior(root, item.ref_entity, frag)
         return
 
     # 알 수 없는 타입이면 최대한 안전하게 버림(혹은 raise)
@@ -143,6 +147,76 @@ def _insert_into_entities(root: ET._Element, frag: list[ET._Element]) -> None:
             entities.append(_clone(el))
 
 
+def _insert_agent(root: ET._Element, frag: list[ET._Element]) -> None:
+    """
+    agent:
+      1) Entities 하위에 삽입
+      2) Storyboard/Init/Actions 하위에 <Private entityRef="agent 이름"> 생성
+    """
+    _insert_into_entities(root, frag)
+
+    for name in _extract_scenario_object_names(frag):
+        _ensure_private_entity(root, name)
+
+
+def _insert_actor(root: ET._Element, entity_ref: str, frag: list[ET._Element]) -> None:
+    """
+    actor:
+      1) actor 이름 ScenarioObject 존재 확인
+      2) Story/Act/ManeuverGroup 하위 삽입
+      3~6) Maneuver/Event/Action/StartTrigger/ConditionGroup 구조 보장
+    """
+    ref = (entity_ref or "").strip()
+    if not ref:
+        raise InserterError("actor ref_entity is required")
+
+    if not _scenario_object_exists(root, ref):
+        raise InserterError(f"actor ScenarioObject not found: {ref}")
+
+    mg, _, _, _, _ = _ensure_story_chain(root, ref)
+    for el in frag:
+        # Actors wrapper가 오면 중복 생성 대신 EntityRef만 보강
+        if el.tag == "Actors":
+            for er in el.findall(".//EntityRef"):
+                er_name = (er.get("entityRef") or "").strip()
+                if er_name:
+                    _ensure_maneuver_group_for_entity(root, er_name)
+            if not list(el.findall(".//EntityRef")):
+                mg.append(_clone(el))
+            continue
+        mg.append(_clone(el))
+
+
+def _insert_condition(root: ET._Element, entity_ref: str, frag: list[ET._Element]) -> None:
+    """
+    condition:
+      Story/Act/ManeuverGroup/Maneuver/Event/StartTrigger/ConditionGroup 하위 삽입
+    """
+    ref = (entity_ref or "Target").strip() or "Target"
+    _, _, _, _, cond_group = _ensure_story_chain(root, ref)
+    for el in frag:
+        if el.tag == "ConditionGroup":
+            for c in list(el):
+                cond_group.append(_clone(c))
+        else:
+            cond_group.append(_clone(el))
+
+
+def _insert_behavior(root: ET._Element, entity_ref: str, frag: list[ET._Element]) -> None:
+    """
+    behavior:
+      Story/Act/ManeuverGroup/Maneuver/Event/Action 하위 삽입
+    """
+    ref = (entity_ref or "Target").strip() or "Target"
+    _, _, _, action, _ = _ensure_story_chain(root, ref)
+    for el in frag:
+        if el.tag == "Action":
+            for c in list(el):
+                action.append(_clone(c))
+        else:
+            action.append(_clone(el))
+
+
 def _insert_into_init_actions_private(root: ET._Element, entity_ref: str, frag: list[ET._Element]) -> None:
     """
     Storyboard/Init/Actions 아래에 Private(entityRef=...)가 없으면 만들고,
@@ -154,23 +228,7 @@ def _insert_into_init_actions_private(root: ET._Element, entity_ref: str, frag: 
     if not entity_ref:
         entity_ref = "Target"
 
-    actions = root.find(".//Storyboard/Init/Actions")
-    if actions is None:
-        # Storyboard/Init/Actions가 템플릿에 없으면 생성
-        storyboard = root.find(".//Storyboard")
-        if storyboard is None:
-            storyboard = _ensure_path(root, ["Storyboard"])
-        init = _find_or_create(storyboard, "Init")
-        actions = _find_or_create(init, "Actions")
-
-    # Private 찾거나 생성
-    priv = None
-    for p in actions.findall("Private"):
-        if p.get("entityRef") == entity_ref:
-            priv = p
-            break
-    if priv is None:
-        priv = ET.SubElement(actions, "Private", entityRef=entity_ref)
+    priv = _ensure_private_entity(root, entity_ref)
 
     for el in frag:
         if el.tag == "Private":
@@ -179,58 +237,6 @@ def _insert_into_init_actions_private(root: ET._Element, entity_ref: str, frag: 
                 priv.append(_clone(c))
         else:
             priv.append(_clone(el))
-
-
-def _insert_into_start_trigger(root: ET._Element, frag: list[ET._Element]) -> None:
-    """
-    Storyboard/Story/Act/StartTrigger에 ConditionGroup/Condition 등을 삽입.
-    템플릿 구조가 다양해서 Act가 없으면 기본 Act를 생성한다.
-    """
-    start_trigger = root.find(".//Storyboard/Story/Act/StartTrigger")
-    if start_trigger is None:
-        act = _ensure_default_act(root)
-        start_trigger = _find_or_create(act, "StartTrigger")
-
-    for el in frag:
-        if el.tag == "StartTrigger":
-            for c in list(el):
-                start_trigger.append(_clone(c))
-        elif el.tag == "ConditionGroup":
-            start_trigger.append(_clone(el))
-        elif el.tag == "Condition":
-            # Condition 단독이면 ConditionGroup으로 감싼다 (표준 구조)
-            cg = ET.Element("ConditionGroup")
-            cg.append(_clone(el))
-            start_trigger.append(cg)
-        else:
-            # 알 수 없으면 일단 trigger 아래로 붙임(최대한 관대)
-            start_trigger.append(_clone(el))
-
-
-def _insert_into_maneuver_group(root: ET._Element, entity_ref: str, frag: list[ET._Element]) -> None:
-    """
-    Storyboard/Story/Act 아래 ManeuverGroup을 찾아(없으면 생성) snippet 삽입.
-    behavior snippet이 Maneuver/ManeuverGroup/Event/Action 등 여러 형태일 수 있으니 최대한 수용.
-    """
-    if not entity_ref:
-        entity_ref = "Target"
-
-    act = root.find(".//Storyboard/Story/Act")
-    if act is None:
-        act = _ensure_default_act(root)
-
-    # ManeuverGroup 찾기(Actor/EntityRef 기준이 템플릿마다 다름)
-    mg = _find_maneuver_group_for_entity(act, entity_ref)
-    if mg is None:
-        mg = _create_maneuver_group(act, entity_ref)
-
-    for el in frag:
-        if el.tag == "ManeuverGroup":
-            # 통째로 오면 내부를 병합
-            for c in list(el):
-                mg.append(_clone(c))
-        else:
-            mg.append(_clone(el))
 
 
 def _ensure_default_act(root: ET._Element) -> ET._Element:
@@ -276,5 +282,85 @@ def _create_maneuver_group(act: ET._Element, entity_ref: str) -> ET._Element:
     mg = ET.SubElement(act, "ManeuverGroup", name=f"MG_{entity_ref}", maximumExecutionCount="1")
     actors = ET.SubElement(mg, "Actors", selectTriggeringEntities="false")
     ET.SubElement(actors, "EntityRef", entityRef=entity_ref)
-    # Maneuver는 behavior가 들어갈 때 생성될 수도 있어서 여기서는 비워둠
     return mg
+
+
+def _ensure_private_entity(root: ET._Element, entity_ref: str) -> ET._Element:
+    actions = root.find(".//Storyboard/Init/Actions")
+    if actions is None:
+        storyboard = root.find(".//Storyboard")
+        if storyboard is None:
+            storyboard = _ensure_path(root, ["Storyboard"])
+        init = _find_or_create(storyboard, "Init")
+        actions = _find_or_create(init, "Actions")
+
+    for p in actions.findall("Private"):
+        if p.get("entityRef") == entity_ref:
+            return p
+    return ET.SubElement(actions, "Private", entityRef=entity_ref)
+
+
+def _extract_scenario_object_names(frag: list[ET._Element]) -> list[str]:
+    names: list[str] = []
+    for el in frag:
+        if el.tag == "ScenarioObject":
+            n = (el.get("name") or "").strip()
+            if n:
+                names.append(n)
+            continue
+        for so in el.findall(".//ScenarioObject"):
+            n = (so.get("name") or "").strip()
+            if n:
+                names.append(n)
+    # 중복 제거(순서 유지)
+    seen = set()
+    out: list[str] = []
+    for n in names:
+        if n in seen:
+            continue
+        seen.add(n)
+        out.append(n)
+    return out
+
+
+def _scenario_object_exists(root: ET._Element, name: str) -> bool:
+    return root.find(f".//Entities/ScenarioObject[@name='{name}']") is not None
+
+
+def _ensure_maneuver_group_for_entity(root: ET._Element, entity_ref: str) -> ET._Element:
+    act = root.find(".//Storyboard/Story/Act")
+    if act is None:
+        act = _ensure_default_act(root)
+    mg = _find_maneuver_group_for_entity(act, entity_ref)
+    if mg is None:
+        mg = _create_maneuver_group(act, entity_ref)
+    return mg
+
+
+def _ensure_story_chain(root: ET._Element, entity_ref: str) -> tuple[ET._Element, ET._Element, ET._Element, ET._Element, ET._Element]:
+    """
+    Story -> Act -> ManeuverGroup -> Maneuver -> Event -> Action / StartTrigger -> ConditionGroup
+    """
+    mg = _ensure_maneuver_group_for_entity(root, entity_ref)
+
+    maneuver = mg.find("Maneuver")
+    if maneuver is None:
+        maneuver = ET.SubElement(mg, "Maneuver", name=f"Maneuver_{entity_ref}")
+
+    event = maneuver.find("Event")
+    if event is None:
+        event = ET.SubElement(maneuver, "Event", name=f"Event_{entity_ref}", priority="override")
+
+    action = event.find("Action")
+    if action is None:
+        action = ET.SubElement(event, "Action", name=f"Action_{entity_ref}")
+
+    start_trigger = event.find("StartTrigger")
+    if start_trigger is None:
+        start_trigger = ET.SubElement(event, "StartTrigger")
+
+    cond_group = start_trigger.find("ConditionGroup")
+    if cond_group is None:
+        cond_group = ET.SubElement(start_trigger, "ConditionGroup")
+
+    return mg, maneuver, event, action, cond_group
