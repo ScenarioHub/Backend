@@ -4,7 +4,7 @@ from django.db import connection
 from django.utils import timezone
 
 from utils.scenario.generator import generator
-from utils.utils import build_filename, save_scenario_file, save_video_file, get_base_scenario_path, parse_scenario_snippet
+from utils.utils import build_filename, get_base_scenario_path, parse_scenario_snippet, save_video_file
 
 def thread_start_generation(job_uuid):
     try:
@@ -35,9 +35,6 @@ def thread_start_generation(job_uuid):
         code_snippet = parse_scenario_snippet(xosc_path)
         file_size = os.path.getsize(xosc_path)
         video_path = save_video_file(xosc_path, file_name)
-        if isinstance(video_path, Exception):
-            return 
-
 
         scenario_columns = ['owner_id', 'file_url', 'video_url', 'file_format', 'file_version', 'file_size', 'code_snippet', 'created_at']
         values = [user_id, xosc_path, video_path, 'OpenSCENARIO', '1.2', file_size, code_snippet, timezone.now()]

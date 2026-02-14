@@ -5,13 +5,13 @@ import json
 import re
 import threading
 import urllib.request
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from django.conf import settings
+
 import numpy as np
 import psycopg
-from django.conf import settings
 
 from utils.scenario.inserter import ScenarioItem
 
@@ -97,8 +97,6 @@ def retrieve_scenario_items(description: str) -> List[ScenarioItem]:
       "agent", "actor", "pos", "speed", "condition", "behavior"
     """
     desc = (description or "").strip()
-    if not desc:
-        raise RetrievalError("description is empty")
 
     cfg = _build_query_cfg(desc)
 

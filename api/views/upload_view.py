@@ -84,9 +84,6 @@ def upload_post(request):
 
     try:
         cursor = connection.cursor()
-
-        print(type(tags))
-        print(tags)
         
         scenario_path = save_scenario_file(uploaded_file, file_name)
         code_snippet = parse_scenario_snippet(scenario_path)

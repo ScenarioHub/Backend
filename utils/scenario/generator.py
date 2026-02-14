@@ -3,13 +3,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from lxml import etree as ET
-
-from utils.scenario.config import ScenarioConfigError
 from utils.scenario.retrieval import retrieve_scenario_items
 from utils.scenario.inserter import insert_scenario
+from utils.utils import save_scenario_file
 
-from utils.utils import save_xosc_content
+from lxml import etree as ET
 
 
 class ScenarioGenerationError(RuntimeError):
@@ -31,27 +29,13 @@ def generator(
         xosc_path (str)
     """
 
-    if not description or not description.strip():
-        raise ScenarioGenerationError("description is empty")
-    if not file_name or not str(file_name).strip():
-        raise ScenarioGenerationError("file_name is required")
-    if not base_scenario_path or not str(base_scenario_path).strip():
-        raise ScenarioGenerationError("base_scenario_path is required")
-
     base_xosc_path = Path(base_scenario_path)
-    if base_xosc_path.suffix.lower() != ".xosc":
-        raise ScenarioGenerationError(
-            f"invalid base_scenario_path extension: {base_xosc_path.suffix}"
-        )
     if not base_xosc_path.exists():
         raise ScenarioGenerationError(f"base xosc not found: {base_xosc_path}")
 
     # 1) 리소스 resolve
-    try:
-        base_xosc_path = base_xosc_path.resolve()
-    except ScenarioConfigError as e:
-        raise ScenarioGenerationError(f"Invalid resource path: {e}") from e
-
+    base_xosc_path = base_xosc_path.resolve()
+    
     # 2) snippet retrieval
     try:
         items = retrieve_scenario_items(description)
@@ -76,7 +60,7 @@ def generator(
             xml_declaration=True,
             pretty_print=True,
         )
-        xosc_path = save_xosc_content(xosc_bytes, str(file_name))
+        xosc_path = save_scenario_file(xosc_bytes, file_name)
     except Exception as e:
         raise ScenarioGenerationError(f"Saving xosc failed: {e}") from e
 

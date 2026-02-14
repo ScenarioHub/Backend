@@ -4,6 +4,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.utils import timezone
+from django.core.files import uploadedfile
 
 from pathlib import Path
 
@@ -40,13 +41,18 @@ def parse_scenario_snippet(file_path, line_limit=50): # 50줄 파싱
     
     return code_snippet
 
-def save_scenario_file(upload_file, file_name):
+def save_scenario_file(file, file_name):
     scenario_dir = settings.DATA_ROOT / 'scenario'
     scenario_path = scenario_dir / (file_name + ".xosc")
+    output_file = open(scenario_path, "wb")
 
-    with open(scenario_path, "wb") as f:
-        for chunk in upload_file.chunks():
-            f.write(chunk)
+    if isinstance(file, uploadedfile.InMemoryUploadedFile):
+        for chunk in file.chunks():
+            output_file.write(chunk)
+    if isinstance(file, bytes):
+        output_file.write(file)
+
+    output_file.close()
     print(f"Scenario file saved at {scenario_path.resolve()}")
 
     return str(scenario_path)
@@ -76,17 +82,3 @@ def save_video_file(scenario_file, file_name):
     print(f"Video file saved at {video_path.resolve()}")
     
     return str(video_path)
-
-def save_xosc_content(xosc_bytes: bytes, file_name: str) -> str:
-    """
-    generator가 만든 xosc(XML)를 bytes로 받아서 settings.DATA_ROOT/scenario 아래에 저장
-    """
-    scenario_dir = settings.DATA_ROOT / "scenario"
-    scenario_dir.mkdir(parents=True, exist_ok=True)
-
-    scenario_path = scenario_dir / (file_name + ".xosc")
-    with open(scenario_path, "wb") as f:
-        f.write(xosc_bytes)
-
-    print(f"Scenario file saved at {scenario_path.resolve()}")
-    return str(scenario_path)

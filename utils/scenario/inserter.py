@@ -40,6 +40,7 @@ def insert_scenario(
     for it in items:
         _insert_item(root, it)
 
+    ET.indent(tree, "  ")
     return tree
 
 
