@@ -47,7 +47,7 @@ DEFAULT_REF_ENTITY = os.environ.get("SCENARIO_DEFAULT_ENTITY", "Target")
 PREFIX = os.environ.get("SCENARIO_EMB_PREFIX", "DESC: ").strip()
 
 # Gemini 설정
-GEMINI_API_KEY = "키 추가하세요"
+GEMINI_API_KEY = settings.GEMINI_API_KEY
 GEMINI_MODEL = "gemini-2.5-flash"
 
 NORMALIZE = True

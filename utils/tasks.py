@@ -4,7 +4,7 @@ from django.db import connection
 from django.utils import timezone
 
 from utils.scenario.generator import generator
-from utils.utils import build_filename, save_scenario_file, save_video_file
+from utils.utils import build_filename, save_scenario_file, save_video_file, get_base_scenario_path
 
 def thread_start_generation(job_uuid):
     try:
@@ -26,9 +26,13 @@ def thread_start_generation(job_uuid):
 
         cursor.execute("update generation_jobs set status=%s where job_uuid=%s", ['running', job_uuid])
 
-        xosc_path = generator(description, map_id)
-        file_size = os.path.getsize(xosc_path)
+        cursor.execute("select map_name from maps where id=%s", [map_id])
+        map_name = cursor.fetchone()[0]
+
+        base_scenario_path = get_base_scenario_path(map_name)
         file_name = build_filename(user_id)
+        xosc_path = generator(description, file_name, base_scenario_path)
+        file_size = os.path.getsize(xosc_path)
         video_path = save_video_file(xosc_path, file_name)
         if isinstance(video_path, Exception):
             return 

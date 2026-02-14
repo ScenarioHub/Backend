@@ -18,13 +18,13 @@ class ScenarioGenerationError(RuntimeError):
 
 def generator(
     description: str,
-    out_path: str,
+    file_name: str,
     base_scenario_path: str,
 ) -> str:
     """
     Args:
         description: 자연어 설명
-        out_path: 파일명(확장자 제외). 저장 시 ".xosc"만 붙임
+        file_name: 파일명(확장자 제외). 저장 시 ".xosc"만 붙임
         base_scenario_path: base xosc 파일 경로
 
     Returns:
@@ -33,8 +33,8 @@ def generator(
 
     if not description or not description.strip():
         raise ScenarioGenerationError("description is empty")
-    if not out_path or not str(out_path).strip():
-        raise ScenarioGenerationError("out_path is required")
+    if not file_name or not str(file_name).strip():
+        raise ScenarioGenerationError("file_name is required")
     if not base_scenario_path or not str(base_scenario_path).strip():
         raise ScenarioGenerationError("base_scenario_path is required")
 
@@ -76,7 +76,7 @@ def generator(
             xml_declaration=True,
             pretty_print=True,
         )
-        xosc_path = save_xosc_content(xosc_bytes, str(out_path))
+        xosc_path = save_xosc_content(xosc_bytes, str(file_name))
     except Exception as e:
         raise ScenarioGenerationError(f"Saving xosc failed: {e}") from e
 

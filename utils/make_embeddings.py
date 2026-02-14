@@ -1,5 +1,4 @@
 # DB 전체 임베딩 코드
-# export DB_DSN="postgresql://USER:PASSWORD@HOST:5432/SCHEMA"
 # python make_embeddings.py
 
 import os
@@ -7,13 +6,12 @@ import numpy as np
 import psycopg
 from FlagEmbedding import FlagAutoModel
 
+from django.conf import settings
+
 # ======================
 # CONFIG
 # ======================
-DB_DSN = os.environ.get(
-    "DB_DSN",
-    "postgresql://USER:PASSWORD@HOST:5432/SCHEMA"
-)
+DB_DSN = settings.DB_DSN
 
 TABLES = [
     "actors",

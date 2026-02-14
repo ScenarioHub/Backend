@@ -4,8 +4,9 @@ djangorestframework
 djangorestframework-simplejwt
 drf_yasg
 mysqlclient
-
 psycopg
+psycopg-binary
 lxml
 numpy
 FlagEmbedding
+transformers<5,>=4.30.0

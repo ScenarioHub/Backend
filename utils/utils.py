@@ -15,6 +15,9 @@ def build_filename(user_id, return_ts=False):
 
     return (file_name, created_at.isoformat()) if return_ts else file_name
 
+def get_base_scenario_path(map_name):
+    return settings.DATA_ROOT / f"xosc/{map_name}.xosc"
+
 def parse_scenario_snippet(file_path, line_limit=50): # 50줄 파싱
     code_snippet = ""
     if not (file_path and os.path.exists(file_path)):
@@ -52,7 +55,6 @@ def save_video_file(scenario_file, file_name):
     old_pwd = os.getcwd()
 
     os.chdir(settings.DATA_ROOT.parent / "tmp")
-    print(os.getcwd())
     log_dir = settings.DATA_ROOT / 'esmini_log'
     log_path = log_dir / (file_name + ".log")
     run_esmini = f"export DISPLAY=:98 && esmini --window 0 0 800 400 --osc {scenario_file} --logfile_path {log_path} --capture_screen --fixed_timestep 1"
