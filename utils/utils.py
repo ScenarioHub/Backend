@@ -16,7 +16,7 @@ def build_filename(user_id, return_ts=False):
     return (file_name, created_at.isoformat()) if return_ts else file_name
 
 def get_base_scenario_path(map_name):
-    return settings.DATA_ROOT / f"xosc/{map_name}.xosc"
+    return settings.DATA_ROOT / f"xosc_examples/{map_name}.xosc"
 
 def parse_scenario_snippet(file_path, line_limit=50): # 50줄 파싱
     code_snippet = ""
