@@ -47,7 +47,7 @@ from api.auth.decorators import jwt_auth_required
 @jwt_auth_required
 @authentication_classes([])
 @permission_classes([])
-def get_scenario_data(request):
+def get_generated_data(request):
     job_uuid = request.GET.get("job_uuid")
     uid = int(request.user_id)
 

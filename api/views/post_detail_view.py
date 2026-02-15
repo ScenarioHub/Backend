@@ -64,7 +64,7 @@ from api.auth.decorators import jwt_auth_optional
 @jwt_auth_optional
 @authentication_classes([])
 @permission_classes([])
-def scenario_detail(request, id):
+def post_detail(request, id):
     message = ""
     try:
         cursor = connection.cursor()

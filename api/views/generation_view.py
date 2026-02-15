@@ -46,7 +46,7 @@ from utils.tasks import thread_start_generation
 @jwt_auth_optional
 @authentication_classes([])
 @permission_classes([])
-def start_generate_scenario(request):
+def start_generating_scenario(request):
     """Start a generation job for a scenario.
 
     Expects JSON { description: str, map_id: int }.

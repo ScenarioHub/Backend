@@ -35,7 +35,7 @@ from drf_yasg import openapi
 )
 
 @api_view(['GET'])
-def get_scenario_stats(request):
+def get_service_stats(request):
     """
     Raw SQL을 이용한 서비스 통계 조회 API
     """

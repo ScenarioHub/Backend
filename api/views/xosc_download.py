@@ -2,6 +2,7 @@ import os
 
 from django.db import connection
 from django.http import StreamingHttpResponse
+from django.shortcuts import redirect
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 
@@ -98,3 +99,70 @@ def download_file(request, id):
                 },
                 status=status
             )
+    
+@swagger_auto_schema(
+    method="get",
+    operation_summary="시나리오 파일 다운로드 (공유 페이지)",
+    operation_description="시나리오 파일을 다운로드 합니다.",
+    responses={
+        200: openapi.Response(
+            description="다운로드 성공",
+            examples={
+                'application/octet-stream': {
+                    "status": 200,
+                    "data": "download URL"
+                },
+            }
+        ),
+        404: openapi.Response(
+            description="파일을 찾을 수 없음",
+            examples={
+                'application/json': {
+                    'status': 404,
+                    'message': "404 Not Found"
+                }
+            }
+        ),
+        500: openapi.Response(
+            description="서버 에러",
+            examples={
+                'application/json': {
+                    'status': 500,
+                    'message': "500 Internal Server Error"
+                }
+            }
+        ),
+    },
+)
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
+def download_file_board(request, id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("select scenario_id from posts where id=%s", [id])
+            scenario_id = cursor.fetchone()
+            if scenario_id is None:
+                status = 404
+                return Response(
+                    data = {
+                        'message': '시나리오를 찾을 수 없음',
+                        'status': status
+                    }, 
+                    status=status
+                )
+            scenario_id = scenario_id[0]
+        return redirect(f"/api/scenarios/{scenario_id}/download/")
+    except Exception:
+        status = 500
+
+        import traceback
+        print(traceback.format_exc())
+
+        return Response(
+            data={
+                'status': status,
+                'message': "500 Internal Server Error",
+                 },
+            status=status
+        )
