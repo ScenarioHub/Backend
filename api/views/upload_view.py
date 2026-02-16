@@ -10,7 +10,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from api.auth.decorators import jwt_auth_required
-from utils.utils import build_filename, parse_scenario_snippet, save_scenario_file, save_video_file           # 배포 서버용 utils 사용
+from utils.utils import build_filename, parse_scenario_snippet, save_scenario_file, save_video_file
 
 @swagger_auto_schema(
     method="post",
@@ -24,6 +24,8 @@ from utils.utils import build_filename, parse_scenario_snippet, save_scenario_fi
                           type=openapi.TYPE_STRING, required=True),
         openapi.Parameter("file", openapi.IN_FORM, description="Post scenario file",
                           type=openapi.TYPE_FILE, required=True),
+        openapi.Parameter("mapId", openapi.IN_FORM, description="Map Id",
+                          type=openapi.TYPE_INTEGER, required=True),
         openapi.Parameter("tags", openapi.IN_FORM, description="CSV tags (예: 어린이,안전,센서)",
                           type=openapi.TYPE_STRING, required=False),
     ],
@@ -64,10 +66,12 @@ def upload_post(request):
     description = request.data.get("description", "").strip()
     tags = request.data.get("tags", "")
     uploaded_file = request.FILES.get("file", None)
+    map_id = request.data.get("mapId", None)
 
     if (not title or
         not description or
-        not uploaded_file):
+        not uploaded_file or
+        not map_id):
         return Response(data={'status': '400', 'message': '필수 항목을 입력하십시오.'}, status=400)
     if tags:
         tag_list = [t.strip() for t in tags.split(",") if t.strip()]
@@ -85,7 +89,19 @@ def upload_post(request):
     try:
         cursor = connection.cursor()
         
-        scenario_path = save_scenario_file(uploaded_file, file_name)
+        cursor.execute("select file_url from maps where id=%s", [map_id])
+        map_path = cursor.fetchone()
+        if map_path is None:
+            return Response(
+                data={
+                    'status': 404,
+                    'message': "맵 정보를 찾을 수 없습니다."
+                },
+                status=404,
+            )
+        map_path = map_path[0]
+
+        scenario_path = save_scenario_file(uploaded_file, file_name, map_path)
         code_snippet = parse_scenario_snippet(scenario_path)
         video_path = save_video_file(scenario_path, file_name)
         

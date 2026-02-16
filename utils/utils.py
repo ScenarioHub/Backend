@@ -6,7 +6,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.core.files import uploadedfile
 
-from pathlib import Path
+from lxml import etree as ET
 
 def build_filename(user_id, return_ts=False):
     created_at = timezone.localtime(timezone.now())
@@ -41,7 +41,7 @@ def parse_scenario_snippet(file_path, line_limit=50): # 50줄 파싱
     
     return code_snippet
 
-def save_scenario_file(file, file_name):
+def save_scenario_file(file, file_name, map_path=None):
     scenario_dir = settings.DATA_ROOT / 'scenario'
     scenario_path = scenario_dir / (file_name + ".xosc")
     output_file = open(scenario_path, "wb")
@@ -53,6 +53,15 @@ def save_scenario_file(file, file_name):
         output_file.write(file)
 
     output_file.close()
+
+    if map_path:
+        tree = ET.parse(scenario_path)
+        root = tree.getroot()
+        
+        map_tag = root.find(".//RoadNetwork/LogicFile")
+        map_tag.set("filepath", map_path)
+        tree.write(scenario_path, pretty_print=True, encoding="utf-8", xml_declaration=True)
+
     print(f"Scenario file saved at {scenario_path.resolve()}")
 
     return str(scenario_path)
@@ -66,14 +75,14 @@ def save_video_file(scenario_file, file_name):
     run_esmini = f"export DISPLAY=:98 && esmini --window 0 0 800 400 --osc {scenario_file} --logfile_path {log_path} --capture_screen --fixed_timestep 1"
     ret_code = subprocess.run(run_esmini, shell=True, executable='/bin/bash')
     if ret_code.returncode != 0:
-        return Exception("esmini error")
+        raise Exception("esmini error")
 
     video_dir = settings.DATA_ROOT / 'video'
     video_path = video_dir / (file_name + ".mp4")
     run_ffmpeg = f"export DISPLAY=:98 && ffmpeg -f image2 -framerate 120 -i screen_shot_%5d.tga -c:v libx264 -vf format=yuv420p -crf 20 {video_path}"
     ret_code = subprocess.run(run_ffmpeg, shell=True, executable='/bin/bash')
     if ret_code.returncode != 0:
-        return Exception("ffmpeg error")
+        raise Exception("ffmpeg error")
     
     for f in Path(".").glob("screen_shot_*.tga"):
         f.unlink()

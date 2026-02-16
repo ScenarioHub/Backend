@@ -272,3 +272,4 @@ logs/
 *.log
 .requirements.sha256
 .DS_Store
+/.vscode
