@@ -13,7 +13,7 @@ from api.auth.decorators import jwt_auth_required
     operation_summary="시나리오 좋아요 토글",
     operation_description="로그인한 사용자가 특정 게시물(포스트)의 시나리오에 좋아요를 추가하거나 취소합니다.",
     manual_parameters=[
-        openapi.Parameter("id", openapi.IN_PATH, description="Post ID (posts.id)", type=openapi.TYPE_INTEGER, required=True),
+        openapi.Parameter("postId", openapi.IN_PATH, description="Post ID", type=openapi.TYPE_INTEGER, required=True),
     ],
     responses={
         200: openapi.Response(description="좋아요 취소/반환", examples={'application/json': {'status':200, 'message': {'liked': False, 'likes': 12}}}),

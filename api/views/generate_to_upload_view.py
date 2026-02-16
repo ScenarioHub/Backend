@@ -15,7 +15,7 @@ from api.auth.decorators import jwt_auth_required
     operation_description="job_uuid를 통해 scenario_id, map_id, description을 가져옵니다.",
     # 조회에 필요한 uuid만 남기고 나머지는 제거하세요.
     manual_parameters=[
-        openapi.Parameter('job_uuid', openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True, description="작업 UUID"),
+        openapi.Parameter('jobId', openapi.IN_PATH, type=openapi.TYPE_STRING, required=True, description="작업 UUID"),
     ],
     responses={
         200: openapi.Response(
@@ -99,14 +99,12 @@ def get_generated_data(request, jobId):
     # request_body를 빈 오브젝트로 명시하여 자동 생성을 막습니다.
     # request_body=openapi.Schema(type=openapi.TYPE_OBJECT), 
     manual_parameters=[
-        openapi.Parameter("jobId", openapi.IN_FORM, type=openapi.TYPE_STRING, required=True, description="작업 UUID"),
+        openapi.Parameter("jobId", openapi.IN_PATH, type=openapi.TYPE_STRING, required=True, description="작업 UUID"),
         openapi.Parameter("title", openapi.IN_FORM, type=openapi.TYPE_STRING, required=True, description="게시글 제목"),
         openapi.Parameter("tags", openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="쉼표 구분 태그"),
     ],
     responses={"201": "공유 성공"}
 )
-
-
 @parser_classes([MultiPartParser, FormParser])
 @api_view(['POST'])
 @jwt_auth_required

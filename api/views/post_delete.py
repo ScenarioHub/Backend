@@ -13,9 +13,9 @@ from api.auth.decorators import jwt_auth_required
     operation_description="게시물을 삭제합니다.",
     manual_parameters=[
         openapi.Parameter(
-            "id",
+            "postId",
             openapi.IN_PATH,
-            description="Scenario ID",
+            description="Post ID",
             type=openapi.TYPE_INTEGER,
             required=True,
         )
