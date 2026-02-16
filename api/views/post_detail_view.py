@@ -64,14 +64,14 @@ from api.auth.decorators import jwt_auth_optional
 @jwt_auth_optional
 @authentication_classes([])
 @permission_classes([])
-def post_detail(request, id):
+def post_detail(request, postId):
     message = ""
     try:
         cursor = connection.cursor()
 
         # posts 테이블 view count 증가
         update_view_count_sql = "UPDATE posts SET view_count = view_count + 1 WHERE id = %s"
-        cursor.execute(update_view_count_sql, [id])
+        cursor.execute(update_view_count_sql, [postId])
         
         connection.commit()
 
@@ -81,7 +81,7 @@ def post_detail(request, id):
                    'uploader_name', 'uploader_initials', 'uploader_email', 'uploader_total_scenarios',
                    'tags']
         sql_query = f"SELECT {','.join(columns)} FROM view_scenario_details WHERE id = %s"     # 수정, 기존 방식은 url에 id를 직접 넣음, 지금은 파라미터로 처리
-        cursor.execute(sql_query, [id]) 
+        cursor.execute(sql_query, [postId]) 
         view = cursor.fetchone()
 
         if not view:
@@ -108,7 +108,7 @@ def post_detail(request, id):
         liked = False
         owner = False
         # find scenario_id for this post (posts.id == id)
-        cursor.execute("SELECT scenario_id FROM posts WHERE id = %s", [id])
+        cursor.execute("SELECT scenario_id FROM posts WHERE id = %s", [postId])
         sc_row = cursor.fetchone()
         scenario_id = int(sc_row[0]) if sc_row else None
 

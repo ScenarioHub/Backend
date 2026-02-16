@@ -47,8 +47,7 @@ from api.auth.decorators import jwt_auth_required
 @jwt_auth_required
 @authentication_classes([])
 @permission_classes([])
-def get_generated_data(request):
-    job_uuid = request.GET.get("job_uuid")
+def get_generated_data(request, jobId):
     uid = int(request.user_id)
 
     try:
@@ -60,12 +59,12 @@ def get_generated_data(request):
             JOIN scenarios s ON g.scenario_id = s.id
             WHERE g.job_uuid = %s AND g.user_id = %s
         """
-        cursor.execute(query, [job_uuid, uid])
+        cursor.execute(query, [jobId, uid])
         row = cursor.fetchone()
         
         if not row:
             return Response({ 'status': 404, 
-                             'message': f'데이터 없음 (UID: {uid}, UUID: {job_uuid})' }, 
+                             'message': f'데이터 없음 (UID: {uid}, UUID: {jobId})' }, 
                              status=404)
 
         return Response({
@@ -113,8 +112,7 @@ def get_generated_data(request):
 @jwt_auth_required
 @authentication_classes([])
 @permission_classes([])
-def upload_from_generation(request):
-    job_uuid = request.data.get("jobId")
+def upload_from_generation(request, jobId):
     title = request.data.get("title", "").strip()
     tags = request.data.get("tags", "")
     uid = int(request.user_id)
@@ -127,7 +125,7 @@ def upload_from_generation(request):
             FROM generation_jobs g
             JOIN scenarios s ON g.scenario_id = s.id
             WHERE g.job_uuid = %s AND g.user_id = %s
-        """, [job_uuid, uid])
+        """, [jobId, uid])
         job_data = cursor.fetchone()
         
         if not job_data:

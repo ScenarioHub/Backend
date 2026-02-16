@@ -54,12 +54,12 @@ from api.auth.decorators import jwt_auth_required
 @jwt_auth_required
 @authentication_classes([])
 @permission_classes([])
-def delete_post(request, id):
+def delete_post(request, postId):
     try:
         requester_uid = getattr(request, 'user_id', None)
         cursor = connection.cursor()
 
-        str_sql = f"SELECT uploader_id FROM posts WHERE id={id}"
+        str_sql = f"SELECT uploader_id FROM posts WHERE id={postId}"
         cursor.execute(str_sql)
         row = cursor.fetchone()
 
@@ -80,7 +80,7 @@ def delete_post(request, id):
                 status=403
             )
 
-        str_sql = f"DELETE FROM posts WHERE id={id}"
+        str_sql = f"DELETE FROM posts WHERE id={postId}"
         cursor.execute(str_sql)
         row = cursor.fetchone()
 
@@ -88,7 +88,7 @@ def delete_post(request, id):
         connection.close()
 
         status = 200
-        message = f"post {id} deleted"
+        message = f"post {postId} deleted"
         print(row)
     except Exception:
         connection.rollback()

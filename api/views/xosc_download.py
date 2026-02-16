@@ -46,11 +46,11 @@ from drf_yasg.utils import swagger_auto_schema
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
-def download_file(request, id):
+def download_file(request, scenarioId):
     with connection.cursor() as cursor:
 
         # DB에서 리눅스 절대 경로 조회
-        cursor.execute("SELECT file_url FROM scenarios WHERE id = %s", [id])
+        cursor.execute("SELECT file_url FROM scenarios WHERE id = %s", [scenarioId])
         row = cursor.fetchone()
         if not row:
             status = 404
@@ -68,7 +68,7 @@ def download_file(request, id):
                 return Response({'status': 404, 'message': "file_url이 잘못되었습니다. (파일 미존재)"}, status=404)
 
         # 다운로드 횟수(download_count) 1 증가 업데이트
-        cursor.execute("UPDATE posts SET download_count = download_count + 1 WHERE id = %s", [id])
+        cursor.execute("UPDATE posts SET download_count = download_count + 1 WHERE id = %s", [scenarioId])
         connection.commit() # Raw SQL이므로 확정(commit) 필요
         
     # 3. 외부 서버에 요청하여 파일을 스트리밍으로 전달
@@ -137,10 +137,10 @@ def download_file(request, id):
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
-def download_file_board(request, id):
+def download_file_board(request, postId):
     try:
         with connection.cursor() as cursor:
-            cursor.execute("select scenario_id from posts where id=%s", [id])
+            cursor.execute("select scenario_id from posts where id=%s", [postId])
             scenario_id = cursor.fetchone()
             if scenario_id is None:
                 status = 404

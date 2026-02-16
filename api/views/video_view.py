@@ -38,14 +38,14 @@ from drf_yasg.utils import swagger_auto_schema
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
-def stream_video(request, id):
+def stream_video(request, scenarioId):
     status = 200
     message = 'Success'
     
     try:
         # 1. DB 조회
         with connection.cursor() as cursor:
-            cursor.execute("SELECT video_url, file_format FROM scenarios WHERE id = %s", [id])
+            cursor.execute("SELECT video_url, file_format FROM scenarios WHERE id = %s", [scenarioId])
             row = cursor.fetchone()
             # 데이터가 없으면 즉시 404 리턴
             if not row or not row[0]:
@@ -150,10 +150,10 @@ def stream_video(request, id):
 @api_view(['GET'])
 @authentication_classes([])
 @permission_classes([])
-def stream_video_board(request, id):
+def stream_video_board(request, postId):
     try:
         with connection.cursor() as cursor:
-            cursor.execute("select scenario_id from posts where id=%s", [id])
+            cursor.execute("select scenario_id from posts where id=%s", [postId])
             scenario_id = cursor.fetchone()
             if scenario_id is None:
                 status = 404
@@ -164,8 +164,8 @@ def stream_video_board(request, id):
                     }, 
                     status=status
                 )
-            scenario_id = scenario_id[0]
-        return redirect(f"/api/scenarios/{scenario_id}/video/")
+            scenarioId = int(scenario_id[0])
+        return redirect(f"/api/scenarios/{scenarioId}/video/")
     except Exception:
         status = 500
 

@@ -12,8 +12,8 @@ urlpatterns = [
     # 시나리오 관련
     path('scenarios/maps/list', get_map_list),
     path('scenarios/maps/preview', get_map_preview),
-    path('scenarios/<int:scearnioId>/video/', stream_video),
-    path('scenarios/<int:scearnioId>/download/', download_file),
+    path('scenarios/<int:scenarioId>/video/', stream_video),
+    path('scenarios/<int:scenarioId>/download/', download_file),
     # 생성 페이지
     path('generator/generate/', start_generating_scenario),
     path('generator/<str:jobId>/state/', get_generating_state),

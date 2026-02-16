@@ -26,7 +26,7 @@ from api.auth.decorators import jwt_auth_required
 @jwt_auth_required
 @authentication_classes([])
 @permission_classes([])
-def toggle_like(request, id):
+def toggle_like(request, postId):
     """Toggle like for a given post id.
 
     The endpoint expects a post id (posts.id). The likes table stores likes by scenario_id,
@@ -38,7 +38,7 @@ def toggle_like(request, id):
         uid = int(request.user_id)
         with connection.cursor() as cursor:
             # Find scenario_id for given post id
-            cursor.execute("SELECT scenario_id FROM posts WHERE id = %s", [id])
+            cursor.execute("SELECT scenario_id FROM posts WHERE id = %s", [postId])
             row = cursor.fetchone()
             if not row:
                 return Response({'status': 404, 'message': '게시물을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
@@ -53,17 +53,17 @@ def toggle_like(request, id):
                 # remove like
                 cursor.execute("DELETE FROM likes WHERE user_id = %s AND scenario_id = %s", [uid, scenario_id])
                 # decrement post like_count safely
-                cursor.execute("UPDATE posts SET like_count = GREATEST(like_count - 1, 0) WHERE id = %s", [id])
+                cursor.execute("UPDATE posts SET like_count = GREATEST(like_count - 1, 0) WHERE id = %s", [postId])
                 # fetch updated count
-                cursor.execute("SELECT like_count FROM posts WHERE id = %s", [id])
+                cursor.execute("SELECT like_count FROM posts WHERE id = %s", [postId])
                 new_count = int(cursor.fetchone()[0])
                 connection.commit()
                 return Response({'status': 200, 'message': {'liked': False, 'likes': new_count}}, status=status.HTTP_200_OK)
             else:
                 # add like
                 cursor.execute("INSERT INTO likes (user_id, scenario_id, created_at) VALUES (%s, %s, NOW())", [uid, scenario_id])
-                cursor.execute("UPDATE posts SET like_count = like_count + 1 WHERE id = %s", [id])
-                cursor.execute("SELECT like_count FROM posts WHERE id = %s", [id])
+                cursor.execute("UPDATE posts SET like_count = like_count + 1 WHERE id = %s", [postId])
+                cursor.execute("SELECT like_count FROM posts WHERE id = %s", [postId])
                 new_count = int(cursor.fetchone()[0])
                 connection.commit()
                 return Response({'status': 201, 'message': {'liked': True, 'likes': new_count}}, status=status.HTTP_201_CREATED)
