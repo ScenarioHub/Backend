@@ -72,14 +72,14 @@ def save_video_file(scenario_file, file_name):
     os.chdir(settings.DATA_ROOT.parent / "tmp")
     log_dir = settings.DATA_ROOT / 'esmini_log'
     log_path = log_dir / (file_name + ".log")
-    run_esmini = f"export DISPLAY=:98 && esmini --window 0 0 800 400 --osc {scenario_file} --logfile_path {log_path} --capture_screen --fixed_timestep 1"
+    run_esmini = f"export DISPLAY=:98 && esmini --window 0 0 800 400 --osc {scenario_file} --logfile_path {log_path} --capture_screen --fixed_timestep 0.03"
     ret_code = subprocess.run(run_esmini, shell=True, executable='/bin/bash')
     if ret_code.returncode != 0:
         raise Exception("esmini error")
 
     video_dir = settings.DATA_ROOT / 'video'
     video_path = video_dir / (file_name + ".mp4")
-    run_ffmpeg = f"export DISPLAY=:98 && ffmpeg -f image2 -framerate 120 -i screen_shot_%5d.tga -c:v libx264 -vf format=yuv420p -crf 20 {video_path}"
+    run_ffmpeg = f"export DISPLAY=:98 && ffmpeg -f image2 -framerate 33.3 -i screen_shot_%5d.tga -c:v libx264 -vf format=yuv420p -crf 20 {video_path}"
     ret_code = subprocess.run(run_ffmpeg, shell=True, executable='/bin/bash')
     if ret_code.returncode != 0:
         raise Exception("ffmpeg error")
