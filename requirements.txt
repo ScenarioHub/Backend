@@ -4,3 +4,8 @@ djangorestframework
 djangorestframework-simplejwt
 drf_yasg
 mysqlclient
+
+psycopg
+lxml
+numpy
+FlagEmbedding

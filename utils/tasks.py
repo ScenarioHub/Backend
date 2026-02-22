@@ -3,7 +3,7 @@ import os
 from django.db import connection
 from django.utils import timezone
 
-from utils.generator import generator
+from utils.scenario.generator import generator
 from utils.utils import build_filename, save_scenario_file, save_video_file
 
 def thread_start_generation(job_uuid):

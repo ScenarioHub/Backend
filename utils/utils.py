@@ -5,6 +5,8 @@ from pathlib import Path
 from django.conf import settings
 from django.utils import timezone
 
+from pathlib import Path
+
 def build_filename(user_id, return_ts=False):
     created_at = timezone.localtime(timezone.now())
     ts = created_at.strftime("%Y%m%d_%H%M%S")
@@ -72,3 +74,17 @@ def save_video_file(scenario_file, file_name):
     print(f"Video file saved at {video_path.resolve()}")
     
     return str(video_path)
+
+def save_xosc_content(xosc_bytes: bytes, file_name: str) -> str:
+    """
+    generator가 만든 xosc(XML)를 bytes로 받아서 settings.DATA_ROOT/scenario 아래에 저장
+    """
+    scenario_dir = settings.DATA_ROOT / "scenario"
+    scenario_dir.mkdir(parents=True, exist_ok=True)
+
+    scenario_path = scenario_dir / (file_name + ".xosc")
+    with open(scenario_path, "wb") as f:
+        f.write(xosc_bytes)
+
+    print(f"Scenario file saved at {scenario_path.resolve()}")
+    return str(scenario_path)

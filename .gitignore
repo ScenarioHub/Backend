@@ -271,3 +271,4 @@ restart_server.sh
 logs/
 *.log
 .requirements.sha256
+.DS_Store
