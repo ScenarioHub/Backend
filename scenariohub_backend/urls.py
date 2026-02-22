@@ -34,5 +34,6 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
+    path("__reload__/", include("django_browser_reload.urls")), # live server 구현 엔드포인트
     path('api/', include('api.urls')),
 ]

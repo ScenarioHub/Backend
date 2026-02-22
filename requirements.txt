@@ -3,6 +3,7 @@ django-cors-headers
 djangorestframework
 djangorestframework-simplejwt
 drf_yasg
+django-browser-reload
 mysqlclient
 psycopg
 psycopg-binary

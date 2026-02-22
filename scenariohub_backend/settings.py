@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'swagger_ui',                       # custom swagger
+    'django_browser_reload',            # live server 구현 패키지
     'drf_yasg',                         # Swagger 사용을 위한 앱 추가
     'api',
     'rest_framework_simplejwt',         # JWT 인증을 위한 앱 추가
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_browser_reload.middleware.BrowserReloadMiddleware', # live server 구현 미들웨어
 ]
 
 ROOT_URLCONF = 'scenariohub_backend.urls'
