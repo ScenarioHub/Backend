@@ -28,3 +28,8 @@ CREATE TABLE IF NOT EXISTS generation_jobs (
 -- job_uuid: use a UUID (char 36) for external references to avoid exposing auto-increment ids.
 -- This reduced schema intentionally omits progress/message/xosc_path/video_path/created_at/updated_at.
 -- If you later need metadata, consider adding columns or a separate job_events table.
+
+ALTER TABLE generation_jobs
+MODIFY COLUMN status 
+ENUM('pending','running','failed','done','generating','recording')
+NOT NULL DEFAULT 'pending';

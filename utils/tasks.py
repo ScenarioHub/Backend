@@ -20,11 +20,11 @@ def thread_start_generation(job_uuid):
 
         user_id, description, map_id, status = row
 
-        if status == "running":
+        if status == "generating" or status == "recording":
             print(f"process_generation_job: job already running {job_uuid}")
             return
 
-        cursor.execute("update generation_jobs set status=%s where job_uuid=%s", ['running', job_uuid])
+        cursor.execute("update generation_jobs set status=%s where job_uuid=%s", ['generating', job_uuid])
 
         cursor.execute("select map_name from maps where id=%s", [map_id])
         map_name = cursor.fetchone()[0]
@@ -34,6 +34,8 @@ def thread_start_generation(job_uuid):
         xosc_path = generator(description, file_name, base_scenario_path)
         code_snippet = parse_scenario_snippet(xosc_path)
         file_size = os.path.getsize(xosc_path)
+
+        cursor.execute("update generation_jobs set status=%s where job_uuid=%s", ['recording', job_uuid])
         video_path = save_video_file(xosc_path, file_name)
 
         scenario_columns = ['owner_id', 'file_url', 'video_url', 'file_format', 'file_version', 'file_size', 'code_snippet', 'created_at']
