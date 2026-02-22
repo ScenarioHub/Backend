@@ -18,16 +18,41 @@ from utils.utils import build_filename, parse_scenario_snippet, save_scenario_fi
     operation_description="업로드한 시나리오를 공유합니다.",
     consumes=["multipart/form-data"],
     manual_parameters=[
-        openapi.Parameter("title", openapi.IN_FORM, description="Post title",
-                          type=openapi.TYPE_STRING, required=True),
-        openapi.Parameter("description", openapi.IN_FORM, description="Post description",
-                          type=openapi.TYPE_STRING, required=True),
-        openapi.Parameter("file", openapi.IN_FORM, description="Post scenario file",
-                          type=openapi.TYPE_FILE, required=True),
-        openapi.Parameter("mapId", openapi.IN_FORM, description="Map Id",
-                          type=openapi.TYPE_INTEGER, required=True),
-        openapi.Parameter("tags", openapi.IN_FORM, description="CSV tags (예: 어린이,안전,센서)",
-                          type=openapi.TYPE_STRING, required=False),
+        openapi.Parameter(
+            name="title", 
+            in_=openapi.IN_FORM, 
+            description="Post title",
+            type=openapi.TYPE_STRING, 
+            required=True,
+        ),
+        openapi.Parameter(
+            name="description", 
+            in_=openapi.IN_FORM, 
+            description="Post description",
+            type=openapi.TYPE_STRING, 
+            required=True
+        ),
+        openapi.Parameter(
+            name="file", 
+            in_=openapi.IN_FORM, 
+            description="Post scenario file",
+            type=openapi.TYPE_FILE, 
+            required=True,
+            ),
+        openapi.Parameter(
+            name="mapId", 
+            in_=openapi.IN_FORM, 
+            description="Map Id",
+            type=openapi.TYPE_INTEGER, 
+            required=True,
+            ),
+        openapi.Parameter(
+            name="tags", 
+            in_=openapi.IN_FORM, 
+            description="CSV tags (예: 어린이,안전,센서)",
+            type=openapi.TYPE_STRING, 
+            required=False,
+        ),
     ],
     responses={
         201: openapi.Response(

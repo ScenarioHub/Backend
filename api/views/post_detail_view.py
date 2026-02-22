@@ -15,8 +15,8 @@ from api.auth.decorators import jwt_auth_optional
     operation_description="시나리오 ID로 시나리오 상세 정보를 조회합니다.",
     manual_parameters=[
         openapi.Parameter(
-            "postId",
-            openapi.IN_PATH,
+            name="postId",
+            in_=openapi.IN_PATH,
             description="Post ID",
             type=openapi.TYPE_INTEGER,
             required=True,

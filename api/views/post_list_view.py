@@ -16,19 +16,22 @@ from api.auth.decorators import jwt_auth_optional
     operation_description="시나리오 목록을 조회합니다.",
     manual_parameters=[
         openapi.Parameter(
-            'page', openapi.IN_QUERY, 
+            name='page', 
+            in_=openapi.IN_QUERY, 
             description="조회할 페이지 번호 (기본값: 1)", 
             type=openapi.TYPE_INTEGER, 
             default=1
         ),
         openapi.Parameter(
-            'sort', openapi.IN_QUERY, 
+            name='sort', 
+            in_=openapi.IN_QUERY, 
             description="정렬 기준: popular(인기순), latest(최신순), oldest(오래된순)", 
             type=openapi.TYPE_STRING, 
             default='latest'
         ),
         openapi.Parameter(
-            'isLiked', openapi.IN_QUERY,
+            name='isLiked', 
+            in_=openapi.IN_QUERY,
             description='1 또는 true 로 설정하면 내가 좋아요한 게시물만 반환 (로그인 필요)',
             type=openapi.TYPE_STRING,
             required=False

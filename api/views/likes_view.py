@@ -16,8 +16,30 @@ from api.auth.decorators import jwt_auth_required
         openapi.Parameter("postId", openapi.IN_PATH, description="Post ID", type=openapi.TYPE_INTEGER, required=True),
     ],
     responses={
-        200: openapi.Response(description="좋아요 취소/반환", examples={'application/json': {'status':200, 'message': {'liked': False, 'likes': 12}}}),
-        201: openapi.Response(description="좋아요 추가/반환", examples={'application/json': {'status':201, 'message': {'liked': True, 'likes': 13}}}),
+        200: openapi.Response(
+            description="좋아요 취소/반환",
+            examples={
+                'application/json': {
+                    'status':200, 
+                    'message': {
+                        'liked': False, 
+                        'likes': 12
+                    }
+                }
+            }
+        ),
+        201: openapi.Response(
+            description="좋아요 추가/반환", 
+            examples={
+                'application/json': {
+                    'status':201, 
+                    'message': {
+                        'liked': True, 
+                        'likes': 13
+                    }
+                }
+            }
+        ),
         401: openapi.Response(description="로그인 필요"),
         404: openapi.Response(description="게시물 없음"),
     }

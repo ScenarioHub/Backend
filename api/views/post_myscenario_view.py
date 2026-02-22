@@ -32,11 +32,20 @@ from api.auth.decorators import jwt_auth_required
         ),
         401: openapi.Response(
             description="인증 실패 (토큰 누락 또는 만료)",
-            examples={"application/json": {"detail": "자격 인증 데이터가 제공되지 않았습니다."}}
+            examples={
+                "application/json": {
+                    "detail": "자격 인증 데이터가 제공되지 않았습니다."
+                }
+            }
         ),
         404: openapi.Response(
             description="데이터 없음",
-            examples={"application/json": {"status": 404, "message": "404 Not Found"}}
+            examples={
+                "application/json": {
+                    "status": 404, 
+                    "message": "404 Not Found"
+                }
+            }
         )
     }
 )

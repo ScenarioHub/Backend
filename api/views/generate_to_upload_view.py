@@ -99,11 +99,54 @@ def get_generated_data(request, jobId):
     # request_body를 빈 오브젝트로 명시하여 자동 생성을 막습니다.
     # request_body=openapi.Schema(type=openapi.TYPE_OBJECT), 
     manual_parameters=[
-        openapi.Parameter("jobId", openapi.IN_PATH, type=openapi.TYPE_STRING, required=True, description="작업 UUID"),
-        openapi.Parameter("title", openapi.IN_FORM, type=openapi.TYPE_STRING, required=True, description="게시글 제목"),
-        openapi.Parameter("tags", openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="쉼표 구분 태그"),
+        openapi.Parameter(
+            name="jobId", 
+            in_=openapi.IN_PATH, 
+            description="작업 UUID"
+            type=openapi.TYPE_STRING, 
+            required=True, 
+        ),
+        openapi.Parameter(
+            name="title", 
+            in_=openapi.IN_FORM, 
+            description="게시글 제목"
+            type=openapi.TYPE_STRING, 
+            required=True, 
+        ),
+        openapi.Parameter(
+            name="tags", 
+            in_=openapi.IN_FORM, 
+            type=openapi.TYPE_STRING, 
+            description="쉼표 구분 태그"
+            required=False, 
+        ),
     ],
-    responses={"201": "공유 성공"}
+    responses={
+        200: openapi.Response(
+            description="생성 후 업로드 성공", 
+            examples={
+                'application/json': {
+                    "status": 201,
+                    "message": {
+                        "postId": 0,
+                        "scenarioId": 0,
+                        "mapId": 5,
+                        "description": "0212_0248",
+                        "filePath": "/home/scenariohub/ScenarioHub/data/xosc/cut-in.xosc"
+                    }
+              }
+            }
+        ),
+            404: openapi.Response(
+                description="데이터 없음",
+                examples={
+                    'application/json': {
+                        'status': 403, 
+                        'message': '권한이 없거나 유효하지 않은 생성 데이터입니다.'
+                        }
+                }
+            ),
+    }
 )
 @parser_classes([MultiPartParser, FormParser])
 @api_view(['POST'])
