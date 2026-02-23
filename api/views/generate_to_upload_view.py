@@ -102,14 +102,14 @@ def get_generated_data(request, jobId):
         openapi.Parameter(
             name="jobId", 
             in_=openapi.IN_PATH, 
-            description="작업 UUID"
+            description="작업 UUID",
             type=openapi.TYPE_STRING, 
             required=True, 
         ),
         openapi.Parameter(
             name="title", 
             in_=openapi.IN_FORM, 
-            description="게시글 제목"
+            description="게시글 제목",
             type=openapi.TYPE_STRING, 
             required=True, 
         ),
@@ -117,7 +117,7 @@ def get_generated_data(request, jobId):
             name="tags", 
             in_=openapi.IN_FORM, 
             type=openapi.TYPE_STRING, 
-            description="쉼표 구분 태그"
+            description="쉼표 구분 태그",
             required=False, 
         ),
     ],
