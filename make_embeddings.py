@@ -6,12 +6,12 @@ import numpy as np
 import psycopg
 from FlagEmbedding import FlagAutoModel
 
-from django.conf import settings
+import env
 
 # ======================
 # CONFIG
 # ======================
-DB_DSN = settings.DB_DSN
+DB_DSN = env.DB_DSN
 
 TABLES = [
     "actors",

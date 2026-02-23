@@ -3,21 +3,23 @@ from __future__ import annotations
 import os
 import json
 import re
+import logging
 import threading
 import urllib.request
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from django.conf import settings
-
 import numpy as np
 import psycopg
+from django.conf import settings
 
 from utils.scenario.inserter import ScenarioItem
 
 
 class RetrievalError(RuntimeError):
     pass
+
+logger = logging.getLogger(__name__)
 
 
 # -----------------------------
@@ -97,6 +99,8 @@ def retrieve_scenario_items(description: str) -> List[ScenarioItem]:
       "agent", "actor", "pos", "speed", "condition", "behavior"
     """
     desc = (description or "").strip()
+    if not desc:
+        raise RetrievalError("description is empty")
 
     cfg = _build_query_cfg(desc)
 
@@ -154,31 +158,17 @@ def retrieve_scenario_items(description: str) -> List[ScenarioItem]:
 # -----------------------------
 def _build_query_cfg(description: str) -> Dict[str, str]:
     """
-    LLM 분해를 우선 시도하고 실패하면 정규식 기반 기본값을 만든다.
-
-    나중에 너희가 슬롯 추출기를 붙이면 여기만 교체하면 됨.
+    LLM 분해만 사용한다.
+    LLM 접근/파싱 실패 시 RetrievalError를 발생시킨다.
     """
     desc = description.strip()
 
     llm_cfg = _build_query_cfg_llm(desc)
-    if llm_cfg is not None:
-        return llm_cfg
+    if llm_cfg is None:
+        logger.error("LLM query split failed; fallback is disabled.")
+        raise RetrievalError("LLM query split failed")
 
-    # 아주 단순한 힌트 추출(있으면 도움됨). 없으면 빈 문자열.
-    # 예: "30m/s", "30 m/s", "30mps"
-    speed = _extract_speed(desc)
-    # 예: "20m 지점", "20 m 지점"
-    pos = _extract_position(desc)
-
-    return {
-        "total": desc,
-        "actors": "",          # 별도 추출 로직이 생기면 채우기
-        "agents": "",          # "
-        "positions": pos or "",
-        "speeds": speed or "",
-        "conditions": "",      # "
-        "behaviors": "",       # "
-    }
+    return llm_cfg
 
 
 def _build_query_cfg_llm(description: str) -> Optional[Dict[str, str]]:
@@ -187,6 +177,7 @@ def _build_query_cfg_llm(description: str) -> Optional[Dict[str, str]]:
     실패 시 None 반환.
     """
     if not GEMINI_API_KEY:
+        logger.error("GEMINI_API_KEY is missing; cannot access LLM.")
         return None
 
     prompt = _load_gemini_prompt(description)
@@ -218,6 +209,7 @@ def _build_query_cfg_llm(description: str) -> Optional[Dict[str, str]]:
         with urllib.request.urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode("utf-8"))
     except Exception:
+        logger.exception("Gemini API request failed.")
         return None
 
     try:
@@ -228,6 +220,7 @@ def _build_query_cfg_llm(description: str) -> Optional[Dict[str, str]]:
         )
         text = (text or "").strip()
         if not text:
+            logger.error("Gemini API returned empty text.")
             return None
 
         # LLM이 코드블록으로 감쌀 수 있으니 제거
@@ -240,6 +233,7 @@ def _build_query_cfg_llm(description: str) -> Optional[Dict[str, str]]:
 
         cfg = json.loads(text)
     except Exception:
+        logger.exception("Failed to parse Gemini response JSON.")
         return None
 
     # 키 보정
