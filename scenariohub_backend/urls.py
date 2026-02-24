@@ -15,11 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
 from django.urls import path, include
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+URL = f'https://{settings.HOST_NAME}' if settings.HOST_NAME else None
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -29,7 +31,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=[permissions.AllowAny],
-    url='http://scenariohub.iptime.org',
+    url=URL,
 )
 
 urlpatterns = [
