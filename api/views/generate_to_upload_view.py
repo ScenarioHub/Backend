@@ -1,6 +1,6 @@
 import os
 import time
-from django.db import connection
+from django.db import connection, transaction
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, parser_classes, authentication_classes, permission_classes
@@ -27,20 +27,21 @@ from api.auth.decorators import jwt_auth_required
                         "description": "시나리오 설명",
                         "mapId": 1,
                         "scenarioId": 1,
-                        "filePath": "C:/Users/user/Desktop/scenario/20260127_220824_2.xosc"
+                        "filePath": "C:/Users/user/Desktop/scenario/20260127_220824_0.xosc",
+                        "videoPath": "C:/Users/user/Desktop/scenario/20260127_220824_0.mp4"
                     }
               }
             }
         ),
-               404: openapi.Response(
-                   description="데이터 없음",
-                   examples={
-                       'application/json': {
-                           "status": 404,
-                           "message": "데이터 없음 (UID: 1, UUID: abcd-efgh-ijkl-mnop)"
-                       }
-                   }
-                ),
+        404: openapi.Response(
+            description="데이터 없음",
+            examples={
+                'application/json': {
+                    "status": 404,
+                    "message": "데이터 없음 (UID: 1, UUID: abcd-efgh-ijkl-mnop)"
+                }
+            }
+        ),
     }
 )
 @api_view(['GET'])
@@ -51,29 +52,76 @@ def get_generated_data(request, jobId):
     uid = int(request.user_id)
 
     try:
-        cursor = connection.cursor()
-        # generation_jobs와 scenarios를 조인하여 상세 정보 추출
-        query = """
-            SELECT g.description, g.map_id, g.scenario_id, s.file_url 
-            FROM generation_jobs g
-            JOIN scenarios s ON g.scenario_id = s.id
-            WHERE g.job_uuid = %s AND g.user_id = %s
-        """
-        cursor.execute(query, [jobId, uid])
-        row = cursor.fetchone()
+        with transaction.atomic():
+            cursor = connection.cursor()
+
+            # 1. jobId를 통해 시나리오 경로와 동영상 경로를 함께 조회
+            query_check = """
+                SELECT g.user_id, g.scenario_id, s.file_url, s.video_url 
+                FROM generation_jobs g
+                JOIN scenarios s ON g.scenario_id = s.id
+                WHERE g.job_uuid = %s
+            """
+            cursor.execute(query_check, [jobId])
+            job_info = cursor.fetchone()
+            
+            if not job_info:
+                return Response({'status': 404, 'message': '존재하지 않는 작업입니다.'}, status=404)
         
-        if not row:
-            return Response({ 'status': 404, 
-                             'message': f'데이터 없음 (UID: {uid}, UUID: {jobId})' }, 
-                             status=404)
+        current_owner, scenario_id, old_file_path, old_video_path = job_info
+        
+        # 2. 비로그인(0) 상태라면 소유권 이전 및 파일명 변경 진행
+        if current_owner == 0:
+            new_file_path = old_file_path
+            new_video_path = old_video_path
+            
+            # [A] 시나리오 파일명 변경 (_0.xosc -> _uid.xosc)
+            if old_file_path and old_file_path.endswith('_0.xosc'):
+                new_file_path = old_file_path.replace('_0.xosc', f'_{uid}.xosc')
+                try:
+                    if os.path.exists(old_file_path):
+                        os.rename(old_file_path, new_file_path)
+                except OSError as e:
+                    print(f"시나리오 파일명 변경 실패: {e}")
+
+            # [B] 동영상 파일명 변경 (_0.mp4 -> _uid.mp4)
+            if old_video_path and old_video_path.endswith('_0.mp4'):
+                new_video_path = old_video_path.replace('_0.mp4', f'_{uid}.mp4')
+                try:
+                    if os.path.exists(old_video_path):
+                        os.rename(old_video_path, new_video_path)
+                except OSError as e:
+                    print(f"동영상 파일명 변경 실패: {e}")
+
+        # 3. DB 업데이트: 두 테이블의 모든 경로 정보 동기화
+            cursor.execute("UPDATE generation_jobs SET user_id = %s WHERE job_uuid = %s", [uid, jobId])
+            cursor.execute("""
+                UPDATE scenarios 
+                SET owner_id = %s, file_url = %s, video_url = %s 
+                WHERE id = %s
+            """, [uid, new_file_path, new_video_path, scenario_id])
+            
+            final_file_path = new_file_path
+            final_video_path = new_video_path
+        
+        elif current_owner != uid:
+            return Response({'status': 403, 'message': '권한이 없습니다.'}, status=403)
+        else:
+            final_file_path = old_file_path
+            final_video_path = old_video_path
+
+            # 4. 최종 데이터 조회
+            cursor.execute("SELECT description, map_id FROM generation_jobs WHERE job_uuid = %s", [jobId])
+            description, map_id = cursor.fetchone()
 
         return Response({
             'status': 200,
             'message': {
-                'description': row[0], 
-                'mapId': row[1], 
-                'scenarioId': row[2],
-                'filePath': (row[3])
+                'description': description, 
+                'mapId': map_id, 
+                'scenarioId': scenario_id,
+                'filePath': final_file_path,
+                'videoPath': final_video_path
             }
         }, status=200)
     except Exception as e:
@@ -160,6 +208,10 @@ def upload_from_generation(request, jobId):
 
     try:
         cursor = connection.cursor()
+
+        # 소유권 업데이트 로직 (GET과 동일하게 적용하여 안전장치 마련)
+        cursor.execute("UPDATE generation_jobs SET user_id = %s WHERE job_uuid = %s AND user_id = 0", [uid, jobId])
+
         # 1. job_uuid를 통해 상세 정보(description, map_id)와 시나리오 파일 경로(file_url)를 함께 조회
         cursor.execute("""
             SELECT g.scenario_id, g.description, g.map_id, s.file_url 
