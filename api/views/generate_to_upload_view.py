@@ -57,7 +57,7 @@ def get_generated_data(request, jobId):
 
             # 1. jobId를 통해 시나리오 경로와 동영상 경로를 함께 조회
             query_check = """
-                SELECT g.user_id, g.scenario_id, s.file_url, s.video_url 
+                SELECT g.user_id, g.scenario_id, s.file_url, s.video_url, g.description, g.map_id 
                 FROM generation_jobs g
                 JOIN scenarios s ON g.scenario_id = s.id
                 WHERE g.job_uuid = %s
@@ -68,7 +68,7 @@ def get_generated_data(request, jobId):
             if not job_info:
                 return Response({'status': 404, 'message': '존재하지 않는 작업입니다.'}, status=404)
         
-        current_owner, scenario_id, old_file_path, old_video_path = job_info
+        current_owner, scenario_id, old_file_path, old_video_path, description, map_id = job_info
         
         # 2. 비로그인(0) 상태라면 소유권 이전 및 파일명 변경 진행
         if current_owner == 0:
