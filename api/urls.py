@@ -15,7 +15,9 @@ urlpatterns = [
     path('scenarios/<int:scenarioId>/video/', stream_video),
     path('scenarios/<int:scenarioId>/download/', download_file),
     # 생성 페이지
-    path('generator/generate/', start_generating_scenario),
+    # path('generator/generate/', start_generating_scenario),
+    # 데모용 생성
+    path('generator/generate/', start_generation),
     path('generator/<str:jobId>/state/', get_generating_state),
     path('generator/<str:jobId>/contents/', get_generated_data),
     path('generator/<str:jobId>/upload/', upload_from_generation),

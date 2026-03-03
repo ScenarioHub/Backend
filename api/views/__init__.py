@@ -14,3 +14,5 @@ from .upload_view import upload_post
 from .post_detail_view import post_detail
 from .post_delete import delete_post
 from .likes_view import toggle_like
+
+from. demo_view import start_generation, demo_generation_logic
