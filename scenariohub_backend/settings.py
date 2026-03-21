@@ -156,6 +156,18 @@ SIMPLE_JWT = {
 }
 
 DATA_ROOT = BASE_DIR.parent / 'data'
+TMP_DIR = BASE_DIR.parent / 'tmp'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+
+if os.name == 'nt':
+    ESMINI_EXE = Path(env.ESMINI_BIN).resolve() / "esmini.exe"
+    ODRVIEWER_EXE = Path(env.ESMINI_BIN).resolve() / "odrviewer.exe"
+    DAT2CSV_EXE = Path(env.ESMINI_BIN).resolve() / "dat2csv.exe"
+    OSGCONV_EXE = Path(env.OSGCONV_BIN).resolve() / "osgconv.exe"
+elif os.name == 'posix':
+    ESMINI_EXE = Path(env.ESMINI_BIN).resolve() / "esmini"
+    ODRVIEWER_EXE = Path(env.ESMINI_BIN).resolve() / "odrviewer"
+    DAT2CSV_EXE = Path(env.ESMINI_BIN).resolve() / "dat2csv"
+    OSGCONV_EXE = Path(env.OSGCONV_BIN).resolve() / "osgconv"
