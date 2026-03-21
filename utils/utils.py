@@ -106,7 +106,7 @@ def dat2csv(dat_path):
     """dat2csv를 실행하여 .csv 파일 생성. 반환: csv 파일 경로."""
     dat_path = Path(dat_path).resolve()
     run_dat2csv = f"{settings.DAT2CSV_EXE} {dat_path} --extended"
-    ret_code = subprocess.run(run_dat2csv, shell=True, cwd=settings.TMP_DIR)
+    ret_code = subprocess.run(run_dat2csv, shell=True, cwd=dat_path.parent)
     if ret_code.returncode != 0:
         raise Exception("dat2csv error")
 
