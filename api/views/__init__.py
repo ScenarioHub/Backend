@@ -2,6 +2,7 @@ from .auth_view import register, login, refresh_token, logout
 from .post_myscenario_view import my_scenario
 
 from .map_view import get_map_list, get_map_preview
+from .scenario_viewer import scenario_viewer
 from .video_view import stream_video, stream_video_board
 from .xosc_download import download_file, download_file_board
 

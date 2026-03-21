@@ -273,3 +273,9 @@ logs/
 .requirements.sha256
 .DS_Store
 /.vscode
+*.dds
+*.obj
+*.mtl
+*.glb
+*.osgb
+*.gltf
