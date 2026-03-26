@@ -44,11 +44,26 @@ def extract_vehicle_models(xosc_path):
             else:
                 model_name = entry_name
 
-        # 2) 인라인 Vehicle 정의에서 name 추출
+        # 2) ScenarioObject의 자식 태그들(Vehicle, Pedestrian 등) 검색
         if model_name is None:
-            vehicle = entity.find(".//Vehicle")
-            if vehicle is not None:
-                model_name = vehicle.get("name", "unknown")
+            # 보통 Vehicle이나 Pedestrian 태그가 1개 존재
+            for child in entity:
+                if child.tag == "CatalogReference":
+                    continue
+                
+                # 1. model3d 속성 먼저 확인 (우선순위 높음)
+                model3d = child.get("model3d")
+                if model3d:
+                    model_name = Path(model3d).stem
+                    break
+
+                # 2. Properties/File[@filepath] 확인
+                file_prop = child.find(".//Properties/File")
+                if file_prop is not None:
+                    filepath = file_prop.get("filepath")
+                    if filepath:
+                        model_name = Path(filepath).stem
+                        break
 
         if model_name is None:
             model_name = "unknown"
