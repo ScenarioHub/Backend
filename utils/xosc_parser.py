@@ -7,9 +7,9 @@ from pathlib import Path
 from lxml import etree as ET
 
 
-def extract_vehicle_models(xosc_path):
+def extract_models(xosc_path):
     """
-    xosc 파일에서 각 ScenarioObject의 차량 모델명을 추출한다.
+    xosc 파일에서 각 ScenarioObject의 osgb 모델명을 추출한다.
     esmini는 Entities에 정의된 순서대로 object id를 0, 1, 2... 로 부여하므로
     동일한 순서로 매핑을 생성한다.
 
