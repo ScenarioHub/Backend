@@ -7,6 +7,8 @@ urlpatterns = [
     path('auth/login/', login),
     path('auth/refresh/', refresh_token),
     path('auth/logout/', logout),
+    # 리소스 관련
+    path('contents/<str:file_type>/<str:filename>', serve_content_file),
     # 개인화 관련
     path('user/myscenario', my_scenario),
     # 시나리오 관련
