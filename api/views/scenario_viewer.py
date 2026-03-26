@@ -1,6 +1,5 @@
 
 import os
-import subprocess
 from pathlib import Path
 
 from django.conf import settings
@@ -12,7 +11,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from api.auth.decorators import jwt_auth_optional
-from utils.xosc_parser import extract_vehicle_models, extract_map_xodr_path
+from utils.xosc_parser import extract_models, extract_map_xodr_path
 from utils.utils import xodr2glb, run_esmini_simulation, dat2csv, csv2dict
 
 
@@ -58,10 +57,10 @@ from utils.utils import xodr2glb, run_esmini_simulation, dat2csv, csv2dict
                             },
                         },
                         "models" : {
-                            "0" : "/home/scenariohub/Scenariohub/data/models/car_white.glt",
-                            "1" : "/home/scenariohub/Scenariohub/data/models/car_red.glt"
+                            "0" : "/contents/models-glb/car_white.glb",
+                            "1" : "/contents/models-glb/car_red.glb"
                         },
-                        "map" : "/home/scenariohub/Scenariohub/data/xodr/crest-curve.glt"
+                        "map" : "/contents/xodr-glb/crest-curve.glb"
                     }
                 }
             }
@@ -98,11 +97,12 @@ def scenario_viewer(request, scenarioId):
         xosc_stem = Path(xosc_path).stem
         dat_path = sim_dir / f"{xosc_stem}.dat"
 
-        vehicle_models = extract_vehicle_models(xosc_path)
-        vehicle_model_paths = {}
-        for obj_id, model_name in vehicle_models.items():
-            model_glb = models_dir / f"{model_name}.glb"
-            vehicle_model_paths[obj_id] = str(model_glb)
+        models = extract_models(xosc_path)
+        print(models)
+        model_urls = {}
+        for obj_id, model_name in models.items():
+            print(model_name)
+            model_urls[obj_id] = f"/contents/models-glb/{model_name}.glb"
 
         run_esmini_simulation(xosc_path, dat_path)
         csv_path = dat2csv(dat_path)
@@ -117,8 +117,8 @@ def scenario_viewer(request, scenarioId):
             "status": 200,
             "message": {
                 "scenario": scenario_data,
-                "models": vehicle_model_paths,
-                "map": str(xodr_glb),
+                "models": model_urls,
+                "map": f"/contents/xodr-glb/{xodr_stem}.glb",
             }
         }
 

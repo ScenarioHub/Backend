@@ -29,9 +29,10 @@ from api.auth.decorators import jwt_auth_optional
                 'application/json': {
                     'status': 200,
                     'message': {
-                        'id': 0,
+                        'postId': 0,
+                        'scenarioId': 0,
                         'title': '어린이 주행 시나리오',
-                        'created_at': '2025-12-28 16:01:45',
+                        'createdAt': '2025-12-28 16:01:45',
                         'description': '어린이 보호구역에서 다양한 돌발 상황(도로 횡단, 차 사이에서 등장 등)을 포함한 시나리오입니다.',
                         'code': '<OpenSCENARIO>...</OpenSCENARIO>',
                         'tags': ['어린이', '안전', '센서'],
@@ -123,9 +124,10 @@ def post_detail(request, postId):
         #connection.close()
         
         message = {
-            'id': view['id'],
+            'postId': view['id'],
+            'scenarioId': scenario_id,
             'title': view['title'],
-            'created_at': view['created_at'],
+            'createdAt': view['created_at'],
             'description': view['description'],
             'code': view['code'],
             'tags': view['tags'],

@@ -7,9 +7,9 @@ from pathlib import Path
 from lxml import etree as ET
 
 
-def extract_vehicle_models(xosc_path):
+def extract_models(xosc_path):
     """
-    xosc 파일에서 각 ScenarioObject의 차량 모델명을 추출한다.
+    xosc 파일에서 각 ScenarioObject의 osgb 모델명을 추출한다.
     esmini는 Entities에 정의된 순서대로 object id를 0, 1, 2... 로 부여하므로
     동일한 순서로 매핑을 생성한다.
 
@@ -44,11 +44,26 @@ def extract_vehicle_models(xosc_path):
             else:
                 model_name = entry_name
 
-        # 2) 인라인 Vehicle 정의에서 name 추출
+        # 2) ScenarioObject의 자식 태그들(Vehicle, Pedestrian 등) 검색
         if model_name is None:
-            vehicle = entity.find(".//Vehicle")
-            if vehicle is not None:
-                model_name = vehicle.get("name", "unknown")
+            # 보통 Vehicle이나 Pedestrian 태그가 1개 존재
+            for child in entity:
+                if child.tag == "CatalogReference":
+                    continue
+                
+                # 1. model3d 속성 먼저 확인 (우선순위 높음)
+                model3d = child.get("model3d")
+                if model3d:
+                    model_name = Path(model3d).stem
+                    break
+
+                # 2. Properties/File[@filepath] 확인
+                file_prop = child.find(".//Properties/File")
+                if file_prop is not None:
+                    filepath = file_prop.get("filepath")
+                    if filepath:
+                        model_name = Path(filepath).stem
+                        break
 
         if model_name is None:
             model_name = "unknown"
