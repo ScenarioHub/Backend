@@ -13,7 +13,7 @@ from lxml import etree as ET
 def build_filename(user_id, return_ts=False):
     created_at = timezone.localtime(timezone.now())
     ts = created_at.strftime("%Y%m%d_%H%M%S")
-    uid = str(user_id)      #dummy
+    uid = str(user_id)
     file_name = f"{ts}_{uid}"
 
     return (file_name, created_at.isoformat()) if return_ts else file_name
@@ -97,7 +97,7 @@ def save_video_file(scenario_file, file_name):
 def run_esmini_simulation(xosc_path, dat_path):
     """esmini를 headless 모드로 실행하여 .dat 파일 생성."""
     run_esmini = f"{settings.ESMINI_EXE} --headless --osc {xosc_path} --fixed_timestep 0.033 --record {dat_path}"
-    ret_code = subprocess.run(run_esmini, shell=True, cwd=settings.TMP_DIR)
+    ret_code = subprocess.run(run_esmini, shell=True, cwd=settings.TMP_DIR, capture_output=True)
     if ret_code.returncode != 0:
         raise Exception("esmini error")
 
@@ -106,7 +106,7 @@ def dat2csv(dat_path):
     """dat2csv를 실행하여 .csv 파일 생성. 반환: csv 파일 경로."""
     dat_path = Path(dat_path).resolve()
     run_dat2csv = f"{settings.DAT2CSV_EXE} {dat_path} --extended"
-    ret_code = subprocess.run(run_dat2csv, shell=True, cwd=settings.TMP_DIR)
+    ret_code = subprocess.run(run_dat2csv, shell=True, cwd=dat_path.parent, capture_output=True)
     if ret_code.returncode != 0:
         raise Exception("dat2csv error")
 
@@ -170,7 +170,6 @@ def csv2dict(csv_path):
 
 def xodr2glb(xodr_path, output_glb_path):
     if os.path.exists(output_glb_path):
-        print(f"GLB file already exists. Skipping conversion: {output_glb_path}")
         return
     
     unique_id = uuid.uuid4().hex[:8]
