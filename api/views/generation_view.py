@@ -63,7 +63,7 @@ def start_generating_scenario(request):
         job_uuid = str(uuid.uuid4())
 
         # If user is authenticated, jwt_auth_optional will have set request.user_id.
-        uid = None
+        uid = 0
         if getattr(request, 'user_id', None):
             uid = int(request.user_id)
 
@@ -71,7 +71,7 @@ def start_generating_scenario(request):
         uid_val = int(uid) if uid else 0
         with connection.cursor() as cursor:
             insert_sql = (
-                "INSERT INTO generation_jobs (job_uuid, user_id, description, map_id, status) "
+                "INSERT INTO generation_jobs (job_uuid, user_id, description, map_id, status)"
                 "VALUES (%s, %s, %s, %s, %s)"
             )
             cursor.execute(insert_sql, [job_uuid, uid_val, description, map_id, 'pending'])

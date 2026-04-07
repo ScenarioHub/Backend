@@ -83,7 +83,8 @@ def toggle_like(request, postId):
                 return Response({'status': 200, 'message': {'liked': False, 'likes': new_count}}, status=status.HTTP_200_OK)
             else:
                 # add like
-                cursor.execute("INSERT INTO likes (user_id, scenario_id, created_at) VALUES (%s, %s, NOW())", [uid, scenario_id])
+                # pgsql, now > current_timestamp
+                cursor.execute("INSERT INTO likes (user_id, scenario_id, created_at) VALUES (%s, %s, CURRENT_TIMESTAMP)", [uid, scenario_id])
                 cursor.execute("UPDATE posts SET like_count = like_count + 1 WHERE id = %s", [postId])
                 cursor.execute("SELECT like_count FROM posts WHERE id = %s", [postId])
                 new_count = int(cursor.fetchone()[0])

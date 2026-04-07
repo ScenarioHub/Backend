@@ -37,7 +37,7 @@ class RevokedTokenAuthentication(JWTTokenUserAuthentication):
             fingerprint = hashlib.md5(raw_token_str.encode()).hexdigest()
 
         try:
-            with connection.cursor() as cursor:
+            with connection.cursor() as cursor: # pgsql, 변동xㄴ
                 cursor.execute("SELECT 1 FROM revoked_tokens WHERE jti = %s LIMIT 1", [fingerprint])
                 row = cursor.fetchone()
                 if row:

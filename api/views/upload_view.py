@@ -146,27 +146,34 @@ def upload_post(request):
         st_columns = ['owner_id', 'file_url', 'video_url',
                     'file_format', 'file_version', 'file_size',
                     'code_snippet', 'created_at']
-        st_sql = f"insert into scenarios({','.join(st_columns)}) values({','.join(['%s' for _ in range(len(st_columns))])})"
+        # pgsql, 
+        st_sql = f"INSERT INTO scenarios({','.join(st_columns)}) VALUES({','.join(['%s' for _ in range(len(st_columns))])}) RETURNING id"
+        # st_sql = f"insert into scenarios({','.join(st_columns)}) values({','.join(['%s' for _ in range(len(st_columns))])})"
         cursor.execute(
             st_sql,
             [uid, scenario_path, video_path, 
             'OpenSCENARIO', '1.2', uploaded_file.size,
             code_snippet, ts]
         )
-        scenario_id = cursor.lastrowid
+        #pgsql, pg에서는 lastrowid가 제대로 작동하지 않는 경우가 있어 RETURNING id 사용
+        # scenario_id = cursor.lastrowid
+        scenario_id = cursor.fetchone()[0] 
 
         # posts 테이블 저장
         post_columns = ['scenario_id', 'uploader_id', 
                     'title', 'template_desc', 'description',
                     'view_count', 'download_count', 'like_count', 'created_at']
-        post_sql = f"insert into posts({','.join(post_columns)}) values({','.join(['%s' for _ in range(len(post_columns))])})"
+        #pgsql
+        # post_sql = f"insert into posts({','.join(post_columns)}) values({','.join(['%s' for _ in range(len(post_columns))])})"
+        post_sql = f"INSERT INTO posts({','.join(post_columns)}) VALUES({','.join(['%s' for _ in range(len(post_columns))])}) RETURNING id"
         cursor.execute(
             post_sql,
             [scenario_id, uid,
             title, "", description,
             0, 0, 0, ts]
         )
-        post_id = cursor.lastrowid
+        # pgsql, 상동
+        post_id = cursor.fetchone()[0]
 
         # 3) tags + scenario_tags
         if tag_list:
@@ -179,15 +186,19 @@ def upload_post(request):
 
             insert_tags_sql = (
                 f"INSERT INTO tags(name, created_at) VALUES {values_sql} "
-                f"ON DUPLICATE KEY UPDATE name = name"
+                # pgsql, on duplicate key update > conflict do nothing
+                # f"ON DUPLICATE KEY UPDATE name = name"
+                f"ON CONFLICT (name) DO NOTHING"
             )
             cursor.execute(insert_tags_sql, params)
 
             in_placeholders = ",".join(["%s"] * len(tag_list))
-            insert_map_sql = (
-                "INSERT IGNORE INTO scenario_tags (scenario_id, tag_id) "
+            insert_map_sql = ( # pgsql, ignore 없음, on conflict do nothing
+                # "INSERT IGNORE INTO scenario_tags (scenario_id, tag_id) "
+                "INSERT INTO scenario_tags (scenario_id, tag_id) "
                 "SELECT %s AS scenario_id, t.id AS tag_id "
                 f"FROM tags t WHERE t.name IN ({in_placeholders})"
+                "ON CONFLICT (scenario_id, tag_id) DO NOTHING"
             )
             cursor.execute(insert_map_sql, [scenario_id, *tag_list])
 

@@ -11,3 +11,4 @@ lxml
 numpy
 FlagEmbedding
 transformers<5,>=4.30.0
+psycopg2

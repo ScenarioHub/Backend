@@ -10,7 +10,7 @@ def _is_jti_revoked(jti_or_token: str) -> bool:
     if not jti_or_token:
         return False
     try:
-        with connection.cursor() as cursor:
+        with connection.cursor() as cursor: # pgsql, 변동 x
             cursor.execute("SELECT 1 FROM revoked_tokens WHERE jti = %s LIMIT 1", [jti_or_token])
             return cursor.fetchone() is not None
     except Exception:

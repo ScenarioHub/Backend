@@ -58,17 +58,30 @@ def my_scenario(request):
     user_id = int(request.user_id) 
 
     with connection.cursor() as cursor:
+        # pgsql
         query = """
             SELECT 
-                CAST(id AS CHAR) AS id, 
+                id::text AS id,
                 title, 
                 description AS summary, 
-                DATE_FORMAT(created_at, '%%Y-%%m-%%d %%H:%%i:%%s') AS createdAt,
-                download_count AS downloadCount
+                TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS "createdAt",
+                download_count AS "downloadCount"
             FROM posts 
             WHERE uploader_id = %s
             ORDER BY created_at DESC
         """
+        # """
+        #     SELECT 
+        #         CAST(id AS CHAR) AS id, 
+        #         title, 
+        #         description AS summary, 
+        #         DATE_FORMAT(created_at, '%%Y-%%m-%%d %%H:%%i:%%s') AS createdAt,
+        #         download_count AS downloadCount
+        #     FROM posts 
+        #     WHERE uploader_id = %s
+        #     ORDER BY created_at DESC
+        # """
+        
         cursor.execute(query, [user_id])
         
         columns = [col[0] for col in cursor.description]

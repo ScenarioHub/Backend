@@ -19,7 +19,7 @@ def demo_generation_logic(job_uuid):
         
         # 2. 2초 동안 'recording' 상태로 변경
         with connection.cursor() as cursor:
-            cursor.execute(
+            cursor.execute( # pgsql
                 "UPDATE generation_jobs SET status = %s WHERE job_uuid = %s",
                 ['recording', job_uuid]
             )
@@ -27,7 +27,7 @@ def demo_generation_logic(job_uuid):
         
         # 3. 최종 완료 및 미리 준비된 시나리오 데이터 연결
         with connection.cursor() as cursor:
-            cursor.execute(
+            cursor.execute( # pgsql
                 "UPDATE generation_jobs SET status = %s, scenario_id = %s WHERE job_uuid = %s",
                 ['done', DEMO_SCENARIO_ID, job_uuid]
             )
@@ -46,7 +46,7 @@ def start_generation(request):
 
     # 초기 상태 등록 (generating)
     with connection.cursor() as cursor:
-        cursor.execute(
+        cursor.execute( # pgsql
             "INSERT INTO generation_jobs (job_uuid, status, description, map_id) VALUES (%s, %s, %s, %s)",
             [job_uuid, 'generating', description, map_id]
         )

@@ -81,13 +81,16 @@ def register(request):
 
             # users 테이블에 직접 INSERT (created_at, last_login_at은 NOW() 사용)
             cursor.execute(
+                # pgsql, now > current_timestamp
                 """
                 INSERT INTO users (email, pass_hash, name, initials, provider_id, created_at)
-                VALUES (%s, %s, %s, %s, %s, NOW())
+                VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                RETURNING id
                 """,
                 [email, hashed_pw, name, initials, None],
             )
-            user_id = cursor.lastrowid
+            # pgsql, lastrowid > returning id + fatchone
+            user_id = cursor.fetchone()[0]  
             connection.commit()
 
     except Exception as e:
@@ -309,15 +312,25 @@ def refresh_token(request):
 
             # create revoked_tokens table if not exists and insert jti
             with connection.cursor() as cursor:
-                cursor.execute(
-                    """
+                cursor.execute( 
+                    # """
+                    # CREATE TABLE IF NOT EXISTS revoked_tokens (
+                    #     jti varchar(255) NOT NULL PRIMARY KEY,
+                    #     token_type varchar(32),
+                    #     revoked_at datetime(6) NOT NULL,
+                    #     expires_at datetime(6) NULL,
+                    #     user_id int NULL
+                    # ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                    # """ 
+                    # pgsql
+                    """ 
                     CREATE TABLE IF NOT EXISTS revoked_tokens (
                         jti varchar(255) NOT NULL PRIMARY KEY,
                         token_type varchar(32),
-                        revoked_at datetime(6) NOT NULL,
-                        expires_at datetime(6) NULL,
+                        revoked_at timestamp(6) NOT NULL,
+                        expires_at timestamp(6) NULL,
                         user_id int NULL
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                    );
                     """
                 )
                 cursor.execute(
@@ -403,15 +416,15 @@ def logout(request):
                 old_expires = None
 
             with connection.cursor() as cursor:
-                cursor.execute(
+                cursor.execute( # pgsql
                     """
                     CREATE TABLE IF NOT EXISTS revoked_tokens (
                         jti varchar(255) NOT NULL PRIMARY KEY,
                         token_type varchar(32),
-                        revoked_at datetime(6) NOT NULL,
-                        expires_at datetime(6) NULL,
+                        revoked_at timestamp(6) NOT NULL,
+                        expires_at timestamp(6) NULL,
                         user_id int NULL
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                    );
                     """
                 )
                 cursor.execute(
