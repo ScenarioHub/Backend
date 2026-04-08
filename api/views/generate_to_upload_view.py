@@ -228,9 +228,11 @@ def upload_from_generation(request, jobId):
 
         # 2. posts 테이블에 INSERT
         post_columns = ['scenario_id', 'uploader_id', 'title', 'description', 'created_at']
-        post_sql = f"""
+        # pgsql, now > CURRENT_TIMESTAMP
+        post_sql = """
             INSERT INTO posts (scenario_id, uploader_id, title, description, created_at)
-            VALUES (%s, %s, %s, %s, NOW())
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING id
         """
         post_values = [scenario_id, uid, title, description]
         # print(f"\n--- API 데이터 입력 확인 ---")
@@ -242,23 +244,41 @@ def upload_from_generation(request, jobId):
         #post_sql = f"INSERT INTO posts ({', '.join(post_columns)}) VALUES ({', '.join(['%s']*len(post_columns))})"
         
         cursor.execute(post_sql, post_values)
-        post_id = cursor.lastrowid
+        # pgsql, lastrowid > returning id + fatchone
+        post_id = cursor.fetchone()[0]  
 
         # 3. 태그 처리 로직 (기존과 동일)
         if tags:
             tag_list = list(set([t.strip() for t in tags.split(",") if t.strip()]))
             if tag_list:
-                # %s 하나를 NOW()로 교체하여 DB 시간을 직접 입력합니다.
-                values_sql = ",".join(["(%s, NOW())"] * len(tag_list)) 
+                # [A] tags 테이블에 태그 이름들 등록
+                # (name) 컬럼에 UNIQUE 제약 조건이 있어야 작동합니다.
+                # pgsql, now > CURRENT_TIMESTAMP
+                values_sql = ",".join(["(%s, CURRENT_TIMESTAMP)"] * len(tag_list)) 
+                
                 params = []
                 for name in tag_list: 
                     params.append(name) # 이제 name만 넣으면 됩니다.
-
+                
                 insert_tags_sql = (
                     f"INSERT INTO tags(name, created_at) VALUES {values_sql} "
-                    f"ON DUPLICATE KEY UPDATE name = name"
+                    # pgsql, duplicate key > conflict  do nothing
+                    # f"ON DUPLICATE KEY UPDATE name = name"
+                    f"ON CONFLICT (name) DO NOTHING"
                 )
                 cursor.execute(insert_tags_sql, params)
+                # [B] scenario_tags 테이블에 게시글-태그 연결 (Mapping)
+                # t.name IN (...) 구문을 통해 방금 입력하거나 기존에 있던 태그 ID를 조회하여 삽입합니다.
+                
+                in_placeholders = ",".join(["%s"] * len(tag_list))
+                insert_map_sql = (
+                    "INSERT INTO scenario_tags (scenario_id, tag_id) "
+                    "SELECT %s AS scenario_id, t.id AS tag_id "
+                    f"FROM tags t WHERE t.name IN ({in_placeholders}) "
+                    "ON CONFLICT (scenario_id, tag_id) DO NOTHING"
+                )
+                map_params = [scenario_id] + tag_list
+                cursor.execute(insert_map_sql, map_params)
 
         connection.close()
         return Response({

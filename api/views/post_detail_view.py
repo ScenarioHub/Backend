@@ -98,7 +98,7 @@ def post_detail(request, postId):
             view['tags'] = [tag.strip() for tag in view['tags'].split(',')]
         else:
             view['tags'] = []
-        
+        # pgsql
         sql_query = f"select id from users where email='{view['uploader_email']}'"
         cursor.execute(sql_query)
         uid = int(cursor.fetchone()[0])

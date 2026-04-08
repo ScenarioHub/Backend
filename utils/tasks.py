@@ -41,10 +41,13 @@ def thread_start_generation(job_uuid):
         scenario_columns = ['owner_id', 'file_url', 'video_url', 'file_format', 'file_version', 'file_size', 'code_snippet', 'created_at']
         values = [user_id, xosc_path, video_path, 'OpenSCENARIO', '1.2', file_size, code_snippet, timezone.now()]
         placeholders = ','.join(['%s'] * len(values))
-        insert_sql = f"INSERT INTO scenarios({','.join(scenario_columns)}) VALUES({placeholders})"
+        # pgsql
+        # insert_sql = f"INSERT INTO scenarios({','.join(scenario_columns)}) VALUES({placeholders})"
+        insert_sql = f"INSERT INTO scenarios({','.join(scenario_columns)}) VALUES({placeholders}) RETURNING id"
 
         cursor.execute(insert_sql, values)
-        scenario_id = cursor.lastrowid
+        # pgsql, lastrowid > returning id + fatchone
+        scenario_id = cursor.fatchone()[0]
 
         cursor.execute(
             "update generation_jobs set scenario_id=%s, status=%s where job_uuid=%s",

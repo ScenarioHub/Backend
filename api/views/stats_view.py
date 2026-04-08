@@ -40,12 +40,19 @@ def get_service_stats(request):
     Raw SQL을 이용한 서비스 통계 조회 API
     """
     # 단일 쿼리로 세 가지 데이터를 효율적으로 조회
+    # pgsql
     query = """
         SELECT 
             (SELECT COUNT(*) FROM posts) AS shared_scenarios,
             (SELECT COUNT(*) FROM users) AS active_users,
-            (SELECT IFNULL(SUM(download_count), 0) FROM posts) AS total_downloads
+            (SELECT COALESCE(SUM(download_count), 0) FROM posts) AS total_downloads
     """
+    # """
+    #     SELECT 
+    #         (SELECT COUNT(*) FROM posts) AS shared_scenarios,
+    #         (SELECT COUNT(*) FROM users) AS active_users,
+    #         (SELECT IFNULL(SUM(download_count), 0) FROM posts) AS total_downloads
+    # """
     
     with connection.cursor() as cursor:
         cursor.execute(query)

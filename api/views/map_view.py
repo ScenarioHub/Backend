@@ -36,7 +36,7 @@ def get_map_list(request):
         cursor = connection.cursor()
 
         columns = ['id', 'map_name', 'description', 'file_url', 'img_url']
-        sql_query = f"select * from maps"
+        sql_query = f"SELECT * FROM maps"
         cursor.execute(sql_query)
         view = cursor.fetchall()
         view = [{col: val for col, val in zip(columns, view[i])} for i in range(len(view))]
@@ -111,9 +111,9 @@ def get_map_preview(request):
         return Response(data={'status': 400, 'message': '400 Bad Request'}, status=400)
     try:
         cursor = connection.cursor()
-        sql_query = f"select img_url from maps where id={map_id}"
+        sql_query = f"SELECT img_url FROM maps WHERE id={map_id}"
         cursor.execute(sql_query)
-        img_url = cursor.fetchone()[0]
+        img_url = cursor.fetchone()[0] # pgsql
 
         connection.commit()
         connection.close()

@@ -127,7 +127,7 @@ def post_list(request):
 
         # 정렬 조건에 따른 SQL 구문 결정
         if sort_by == 'popular':
-            order_query = "ORDER BY p.like_count DESC" # 지금은 인기순이 조회수 순인데, 좋아요 순으로 하려면 p.like_count
+            order_query = "ORDER BY p.like_count DESC NULLS LAST" # pgsql, NULL이 맨 위로 올라올 수 있어서 수정
         elif sort_by == 'oldest':
             order_query = "ORDER BY p.created_at ASC"
         else:                                          # 기본값은 최신순(latest)

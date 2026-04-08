@@ -80,9 +80,9 @@ def delete_post(request, postId):
                 status=403
             )
 
-        str_sql = f"DELETE FROM posts WHERE id={postId}"
+        str_sql = f"DELETE FROM posts WHERE id={postId} RETURNING id"
         cursor.execute(str_sql)
-        row = cursor.fetchone()
+        row = cursor.fetchone()[0]
 
         connection.commit()
         connection.close()
