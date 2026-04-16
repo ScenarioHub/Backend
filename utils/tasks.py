@@ -36,7 +36,7 @@ def thread_start_generation(job_uuid):
         file_size = os.path.getsize(xosc_path)
 
         cursor.execute("update generation_jobs set status=%s where job_uuid=%s", ['recording', job_uuid])
-        video_path = save_video_file(xosc_path, file_name)
+        video_path = "deprecated"
 
         scenario_columns = ['owner_id', 'file_url', 'video_url', 'file_format', 'file_version', 'file_size', 'code_snippet', 'created_at']
         values = [user_id, xosc_path, video_path, 'OpenSCENARIO', '1.2', file_size, code_snippet, timezone.now()]
@@ -47,7 +47,7 @@ def thread_start_generation(job_uuid):
 
         cursor.execute(insert_sql, values)
         # pgsql, lastrowid > returning id + fatchone
-        scenario_id = cursor.fatchone()[0]
+        scenario_id = cursor.fetchone()[0]
 
         cursor.execute(
             "update generation_jobs set scenario_id=%s, status=%s where job_uuid=%s",

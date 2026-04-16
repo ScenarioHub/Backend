@@ -98,10 +98,8 @@ def scenario_viewer(request, scenarioId):
         dat_path = sim_dir / f"{xosc_stem}.dat"
 
         models = extract_models(xosc_path)
-        print(models)
         model_urls = {}
         for obj_id, model_name in models.items():
-            print(model_name)
             model_urls[obj_id] = f"/contents/models-glb/{model_name}.glb"
 
         run_esmini_simulation(xosc_path, dat_path)

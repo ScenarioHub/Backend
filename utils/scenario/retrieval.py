@@ -306,6 +306,14 @@ def _get_db_dsn() -> str:
 
 
 def _stage1_candidate_ids(conn: psycopg.Connection, table: str, qvec_pg: str, topk: int) -> List[int]:
+    # TODO
+    # sql = f"""
+    #     SELECT id
+    #     FROM scenario_snippet.{table}
+    #     WHERE embedding IS NOT NULL
+    #     ORDER BY embedding <=> %s::vector
+    #     LIMIT %s;
+    # """
     sql = f"""
         SELECT id
         FROM public.{table}
@@ -328,6 +336,14 @@ def _stage2_pick1_xml(
     if not candidate_ids:
         return None
 
+    # TODO
+    # sql = f"""
+    #     SELECT {xml_col}
+    #     FROM scenario_snippet.{table}
+    #     WHERE id = ANY(%s)
+    #     ORDER BY embedding <=> %s::vector
+    #     LIMIT 1;
+    # """
     sql = f"""
         SELECT {xml_col}
         FROM public.{table}

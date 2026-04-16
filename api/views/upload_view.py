@@ -128,7 +128,7 @@ def upload_post(request):
 
         scenario_path = save_scenario_file(uploaded_file, file_name, map_path)
         code_snippet = parse_scenario_snippet(scenario_path)
-        video_path = save_video_file(scenario_path, file_name)
+        video_path = "deprecated"
         
         # esmini error / ffmpeg error
         if isinstance(video_path, Exception):

@@ -43,9 +43,9 @@ def get_service_stats(request):
     # pgsql
     query = """
         SELECT 
-            (SELECT COUNT(*) FROM posts) AS shared_scenarios,
-            (SELECT COUNT(*) FROM users) AS active_users,
-            (SELECT COALESCE(SUM(download_count), 0) FROM posts) AS total_downloads
+            (SELECT COUNT(*) FROM scenariohub_service.posts) AS shared_scenarios,
+            (SELECT COUNT(*) FROM scenariohub_service.users) AS active_users,
+            (SELECT COALESCE(SUM(download_count), 0) FROM scenariohub_service.posts) AS total_downloads
     """
     # """
     #     SELECT 

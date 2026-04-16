@@ -46,7 +46,7 @@ from api.auth.decorators import jwt_auth_optional
                     "message": {
                         "posts": [
                             {
-                                "id": 28,
+                                "postId": 28,
                                 "title": "4",
                                 "description": "4",
                                 "createdAt": "2026-01-04 21:20:07",
@@ -63,7 +63,7 @@ from api.auth.decorators import jwt_auth_optional
                                 "isLiked": False
                             },
                             {
-                                "id": 27,
+                                "postId": 27,
                                 "title": "4",
                                 "description": "4",
                                 "createdAt": "2026-01-04 21:19:10",
@@ -127,7 +127,7 @@ def post_list(request):
 
         # 정렬 조건에 따른 SQL 구문 결정
         if sort_by == 'popular':
-            order_query = "ORDER BY p.like_count DESC NULLS LAST" # pgsql, NULL이 맨 위로 올라올 수 있어서 수정
+            order_query = "ORDER BY p.like_count DESC" # 지금은 인기순이 조회수 순인데, 좋아요 순으로 하려면 p.like_count
         elif sort_by == 'oldest':
             order_query = "ORDER BY p.created_at ASC"
         else:                                          # 기본값은 최신순(latest)
@@ -186,7 +186,7 @@ def post_list(request):
             pid = r[0]
             post_ids.append(pid)
             posts.append({
-                'id': pid,
+                'postId': pid,
                 'title': r[1],
                 'description': r[2],
                 'createdAt': r[3].strftime("%Y-%m-%d %H:%M:%S") if r[3] else None,
@@ -219,7 +219,7 @@ def post_list(request):
                 tags_map.setdefault(pr_id, []).append(tname)
 
             for p in posts:
-                tlist = tags_map.get(p['id'], [])[:5]
+                tlist = tags_map.get(p['postId'], [])[:5]
                 p['tags'] = tlist
 
         # If user is known, also fetch which of these posts are liked by the user
@@ -236,7 +236,7 @@ def post_list(request):
                     liked_rows = cursor.fetchall()
                 liked_post_ids = {r[0] for r in liked_rows}
                 for p in posts:
-                    if p['id'] in liked_post_ids:
+                    if p['postId'] in liked_post_ids:
                         p['isLiked'] = True
 
         return Response({
